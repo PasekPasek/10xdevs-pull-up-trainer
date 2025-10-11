@@ -1,4 +1,12 @@
-import type { ApiWarning, SessionDTO, SessionRow, SessionSets } from "../../../types";
+import type {
+  ApiWarning,
+  SessionAction,
+  SessionDetailDTO,
+  SessionDTO,
+  SessionRow,
+  SessionSets,
+  SessionStatus,
+} from "../../../types";
 
 export function mapSessionRowToDTO(session: SessionRow): SessionDTO {
   const sets: SessionSets = [
@@ -21,6 +29,37 @@ export function mapSessionRowToDTO(session: SessionRow): SessionDTO {
     isModified: session.is_modified,
     createdAt: session.created_at,
     updatedAt: session.updated_at,
+  };
+}
+
+export function buildSessionActions(status: SessionStatus): SessionAction[] {
+  const actions: SessionAction[] = [];
+
+  switch (status) {
+    case "planned":
+      actions.push("start", "edit", "delete");
+      break;
+    case "in_progress":
+      actions.push("complete", "fail", "edit", "delete");
+      break;
+    case "completed":
+    case "failed":
+      // Immutable - no actions allowed
+      break;
+  }
+
+  return actions;
+}
+
+export function mapSessionRowToDetailDTO(session: SessionRow): SessionDetailDTO {
+  const baseDto = mapSessionRowToDTO(session);
+  const isActive = session.status === "planned" || session.status === "in_progress";
+
+  return {
+    ...baseDto,
+    canEdit: isActive,
+    canDelete: isActive,
+    actions: buildSessionActions(session.status),
   };
 }
 
