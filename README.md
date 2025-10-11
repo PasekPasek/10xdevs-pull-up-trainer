@@ -29,6 +29,7 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
 ## Tech Stack
 
 ### Frontend
+
 - **[Astro](https://astro.build/) 5.13.7** - Modern web framework for fast, content-focused applications
 - **[React](https://react.dev/) 19.1.1** - UI library for interactive components
 - **[TypeScript](https://www.typescriptlang.org/) 5** - Type-safe JavaScript development
@@ -36,6 +37,7 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
 - **[Shadcn/ui](https://ui.shadcn.com/)** - Accessible React component library
 
 ### Backend
+
 - **[Supabase](https://supabase.com/)** - Backend-as-a-Service platform providing:
   - PostgreSQL database
   - Built-in authentication
@@ -43,12 +45,14 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
   - Row-level security
 
 ### AI Integration
+
 - **[Openrouter.ai](https://openrouter.ai/)** - Unified API for multiple AI models:
   - Access to OpenAI, Anthropic, Google, and other providers
   - Financial limits and cost control
   - Model flexibility for optimal performance and cost efficiency
 
 ### DevOps
+
 - **GitHub Actions** - CI/CD pipeline automation
 - **DigitalOcean** - Docker-based application hosting
 
@@ -144,12 +148,14 @@ npm run preview
 ### MVP Features (In Scope)
 
 ✅ **Authentication & User Management**
+
 - Email/password authentication
 - User profile management
 - Password reset functionality
 - Account deletion
 
 ✅ **Session Management**
+
 - Create manual training sessions (5 sets per session)
 - Track session states: planned, in progress, completed, failed
 - Record RPE (Rate of Perceived Exertion) ratings (1-10 scale)
@@ -157,23 +163,27 @@ npm run preview
 - Immutable completed and failed sessions
 
 ✅ **AI-Powered Features**
+
 - AI session generation for new users based on max pull-up count
 - AI recommendations based on training history (last 5-10 sessions)
 - Progress comments with technique tips and encouragement
 - Rate limiting: 5 AI sessions per day per user
 
 ✅ **Training History**
+
 - Paginated session history (10 per page)
 - Filtering by date range and session status
 - Sort by newest/oldest first
 - Filter persistence in local storage
 
 ✅ **Data Management**
+
 - Export training data (JSON/CSV)
 - Timezone-aware date handling (UTC storage, local display)
 - Data integrity and validation
 
 ✅ **User Experience**
+
 - Mobile-responsive design
 - Rest period warnings (24-hour recommendations)
 - Multiple sessions per day warnings
@@ -181,6 +191,7 @@ npm run preview
 - Accessibility (WCAG 2.1 Level AA)
 
 ✅ **Admin Dashboard**
+
 - User and session metrics
 - AI generation success rates
 - Performance monitoring
@@ -207,6 +218,7 @@ This project is currently in the MVP (Minimum Viable Product) development phase.
 ### Success Criteria
 
 The MVP will be considered successful when:
+
 - **70%** of registered users complete at least 1 training session
 - **60%** of users generate at least 1 AI-powered session
 - **95%** AI generation success rate

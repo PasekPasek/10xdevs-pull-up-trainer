@@ -5,6 +5,7 @@
 This database schema is designed for the Pull-Up Training Tracker MVP, a mobile-responsive web application that tracks pull-up training progress and provides AI-powered session recommendations. The schema uses PostgreSQL with Supabase and implements Row Level Security (RLS) for data protection.
 
 **Key Design Principles:**
+
 - Leverages Supabase `auth.users` for authentication (no custom user table)
 - Immutable completed/failed sessions (enforced by triggers)
 - Single active session constraint (enforced by partial unique index)
@@ -30,6 +31,7 @@ CREATE TYPE session_status AS ENUM (
 ```
 
 **Values:**
+
 - `planned`: Initial state when session is created
 - `in_progress`: User has started the workout
 - `completed`: Successfully finished
@@ -48,6 +50,7 @@ CREATE TYPE generation_status AS ENUM (
 ```
 
 **Values:**
+
 - `success`: AI successfully generated session
 - `timeout`: Request exceeded 15-second timeout
 - `error`: API error or other failure
@@ -62,26 +65,27 @@ CREATE TYPE generation_status AS ENUM (
 
 **Columns:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique session identifier |
-| `user_id` | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | Owner of the session |
-| `status` | session_status | NOT NULL, DEFAULT 'planned' | Current session state |
-| `session_date` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | User-provided training date |
-| `set_1` | SMALLINT | NULL, CHECK (set_1 >= 1 AND set_1 <= 60) | Reps in set 1 |
-| `set_2` | SMALLINT | NULL, CHECK (set_2 >= 1 AND set_2 <= 60) | Reps in set 2 |
-| `set_3` | SMALLINT | NULL, CHECK (set_3 >= 1 AND set_3 <= 60) | Reps in set 3 |
-| `set_4` | SMALLINT | NULL, CHECK (set_4 >= 1 AND set_4 <= 60) | Reps in set 4 |
-| `set_5` | SMALLINT | NULL, CHECK (set_5 >= 1 AND set_5 <= 60) | Reps in set 5 |
-| `total_reps` | INTEGER | NOT NULL, DEFAULT 0 | Sum of all sets (auto-calculated by trigger) |
-| `rpe` | SMALLINT | NULL, CHECK (rpe >= 1 AND rpe <= 10) | Rate of Perceived Exertion (1-10 scale) |
-| `is_ai_generated` | BOOLEAN | NOT NULL, DEFAULT false | Whether session was created by AI |
-| `is_modified` | BOOLEAN | NOT NULL, DEFAULT false | Whether AI-generated session was edited |
-| `ai_comment` | TEXT | NULL | AI-generated progress comment (2-3 sentences) |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | System timestamp of creation |
-| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | System timestamp of last update |
+| Column            | Type           | Constraints                                           | Description                                   |
+| ----------------- | -------------- | ----------------------------------------------------- | --------------------------------------------- |
+| `id`              | UUID           | PRIMARY KEY, DEFAULT gen_random_uuid()                | Unique session identifier                     |
+| `user_id`         | UUID           | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | Owner of the session                          |
+| `status`          | session_status | NOT NULL, DEFAULT 'planned'                           | Current session state                         |
+| `session_date`    | TIMESTAMPTZ    | NOT NULL, DEFAULT NOW()                               | User-provided training date                   |
+| `set_1`           | SMALLINT       | NULL, CHECK (set_1 >= 1 AND set_1 <= 60)              | Reps in set 1                                 |
+| `set_2`           | SMALLINT       | NULL, CHECK (set_2 >= 1 AND set_2 <= 60)              | Reps in set 2                                 |
+| `set_3`           | SMALLINT       | NULL, CHECK (set_3 >= 1 AND set_3 <= 60)              | Reps in set 3                                 |
+| `set_4`           | SMALLINT       | NULL, CHECK (set_4 >= 1 AND set_4 <= 60)              | Reps in set 4                                 |
+| `set_5`           | SMALLINT       | NULL, CHECK (set_5 >= 1 AND set_5 <= 60)              | Reps in set 5                                 |
+| `total_reps`      | INTEGER        | NOT NULL, DEFAULT 0                                   | Sum of all sets (auto-calculated by trigger)  |
+| `rpe`             | SMALLINT       | NULL, CHECK (rpe >= 1 AND rpe <= 10)                  | Rate of Perceived Exertion (1-10 scale)       |
+| `is_ai_generated` | BOOLEAN        | NOT NULL, DEFAULT false                               | Whether session was created by AI             |
+| `is_modified`     | BOOLEAN        | NOT NULL, DEFAULT false                               | Whether AI-generated session was edited       |
+| `ai_comment`      | TEXT           | NULL                                                  | AI-generated progress comment (2-3 sentences) |
+| `created_at`      | TIMESTAMPTZ    | NOT NULL, DEFAULT NOW()                               | System timestamp of creation                  |
+| `updated_at`      | TIMESTAMPTZ    | NOT NULL, DEFAULT NOW()                               | System timestamp of last update               |
 
 **Notes:**
+
 - `session_date` is the user-chosen training date (can be past/future), separate from `created_at`
 - `total_reps` is auto-calculated by trigger for query performance
 - Sets are nullable to allow incremental filling during session creation
@@ -96,17 +100,18 @@ CREATE TYPE generation_status AS ENUM (
 
 **Columns:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique generation identifier |
-| `user_id` | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who requested generation |
-| `session_id` | UUID | NULL, REFERENCES sessions(id) ON DELETE SET NULL | Created session (NULL if failed) |
-| `model` | VARCHAR(100) | NOT NULL | AI model name (e.g., 'gpt-4-turbo') |
-| `duration_ms` | INTEGER | NOT NULL | API call duration in milliseconds |
-| `status` | generation_status | NOT NULL | Outcome of generation attempt |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Timestamp of generation attempt |
+| Column        | Type              | Constraints                                           | Description                         |
+| ------------- | ----------------- | ----------------------------------------------------- | ----------------------------------- |
+| `id`          | UUID              | PRIMARY KEY, DEFAULT gen_random_uuid()                | Unique generation identifier        |
+| `user_id`     | UUID              | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who requested generation       |
+| `session_id`  | UUID              | NULL, REFERENCES sessions(id) ON DELETE SET NULL      | Created session (NULL if failed)    |
+| `model`       | VARCHAR(100)      | NOT NULL                                              | AI model name (e.g., 'gpt-4-turbo') |
+| `duration_ms` | INTEGER           | NOT NULL                                              | API call duration in milliseconds   |
+| `status`      | generation_status | NOT NULL                                              | Outcome of generation attempt       |
+| `created_at`  | TIMESTAMPTZ       | NOT NULL, DEFAULT NOW()                               | Timestamp of generation attempt     |
 
 **Notes:**
+
 - Every AI generation attempt is logged, regardless of outcome
 - `session_id` is NULL if generation failed (timeout/error)
 - Used for rate limiting: count WHERE user_id = X AND created_at > NOW() - INTERVAL '24 hours'
@@ -120,17 +125,18 @@ CREATE TYPE generation_status AS ENUM (
 
 **Columns:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique error log identifier |
-| `user_id` | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who experienced error |
-| `generation_id` | UUID | NULL, REFERENCES generations(id) ON DELETE CASCADE | Related generation attempt |
-| `error_type` | VARCHAR(100) | NOT NULL | Error category (e.g., 'timeout', 'api_error') |
-| `error_message` | TEXT | NOT NULL | Human-readable error message |
-| `error_stack` | TEXT | NULL | Stack trace (if available) |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Timestamp of error |
+| Column          | Type         | Constraints                                           | Description                                   |
+| --------------- | ------------ | ----------------------------------------------------- | --------------------------------------------- |
+| `id`            | UUID         | PRIMARY KEY, DEFAULT gen_random_uuid()                | Unique error log identifier                   |
+| `user_id`       | UUID         | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who experienced error                    |
+| `generation_id` | UUID         | NULL, REFERENCES generations(id) ON DELETE CASCADE    | Related generation attempt                    |
+| `error_type`    | VARCHAR(100) | NOT NULL                                              | Error category (e.g., 'timeout', 'api_error') |
+| `error_message` | TEXT         | NOT NULL                                              | Human-readable error message                  |
+| `error_stack`   | TEXT         | NULL                                                  | Stack trace (if available)                    |
+| `created_at`    | TIMESTAMPTZ  | NOT NULL, DEFAULT NOW()                               | Timestamp of error                            |
 
 **Notes:**
+
 - Structured error logging for debugging
 - `generation_id` can be NULL if error occurs before generation record is created
 - Integrated with Sentry or similar monitoring service
@@ -143,15 +149,16 @@ CREATE TYPE generation_status AS ENUM (
 
 **Columns:**
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique event identifier |
-| `user_id` | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who triggered event |
-| `event_type` | VARCHAR(50) | NOT NULL | Event type identifier |
-| `event_data` | JSONB | NOT NULL, DEFAULT '{}' | Event-specific data payload |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Timestamp of event |
+| Column       | Type        | Constraints                                           | Description                 |
+| ------------ | ----------- | ----------------------------------------------------- | --------------------------- |
+| `id`         | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()                | Unique event identifier     |
+| `user_id`    | UUID        | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | User who triggered event    |
+| `event_type` | VARCHAR(50) | NOT NULL                                              | Event type identifier       |
+| `event_data` | JSONB       | NOT NULL, DEFAULT '{}'                                | Event-specific data payload |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                               | Timestamp of event          |
 
 **Event Types (PRD 6.3):**
+
 - `user_registered`
 - `first_session_created`
 - `session_created`
@@ -191,6 +198,7 @@ CREATE TYPE generation_status AS ENUM (
 ```
 
 **Notes:**
+
 - JSONB provides flexibility without schema migrations
 - Used for success metrics calculations (US-054 to US-056)
 - Index on `event_type` for efficient filtering
@@ -220,16 +228,17 @@ generations
 
 ### Relationship Details
 
-| Parent Table | Child Table | Relationship | Foreign Key | On Delete |
-|--------------|-------------|--------------|-------------|-----------|
-| `auth.users` | `sessions` | 1:N | `user_id` | CASCADE |
-| `auth.users` | `generations` | 1:N | `user_id` | CASCADE |
-| `auth.users` | `generation_error_logs` | 1:N | `user_id` | CASCADE |
-| `auth.users` | `events` | 1:N | `user_id` | CASCADE |
-| `sessions` | `generations` | N:1 (optional) | `session_id` | SET NULL |
-| `generations` | `generation_error_logs` | 1:N (optional) | `generation_id` | CASCADE |
+| Parent Table  | Child Table             | Relationship   | Foreign Key     | On Delete |
+| ------------- | ----------------------- | -------------- | --------------- | --------- |
+| `auth.users`  | `sessions`              | 1:N            | `user_id`       | CASCADE   |
+| `auth.users`  | `generations`           | 1:N            | `user_id`       | CASCADE   |
+| `auth.users`  | `generation_error_logs` | 1:N            | `user_id`       | CASCADE   |
+| `auth.users`  | `events`                | 1:N            | `user_id`       | CASCADE   |
+| `sessions`    | `generations`           | N:1 (optional) | `session_id`    | SET NULL  |
+| `generations` | `generation_error_logs` | 1:N (optional) | `generation_id` | CASCADE   |
 
 **Notes:**
+
 - All user data cascades on account deletion (US-007 requirement)
 - `generations.session_id` allows NULL (failed generations) and SET NULL on delete
 - No foreign key from `events` to other tables (JSONB stores references)
@@ -242,51 +251,51 @@ generations
 
 ```sql
 -- 1. Sessions: User's sessions ordered by date (dashboard, history)
-CREATE INDEX idx_sessions_user_date 
+CREATE INDEX idx_sessions_user_date
 ON sessions(user_id, session_date DESC);
 
 -- 2. Sessions: One active session constraint (planned or in_progress)
-CREATE UNIQUE INDEX idx_one_active_session 
-ON sessions(user_id) 
+CREATE UNIQUE INDEX idx_one_active_session
+ON sessions(user_id)
 WHERE status IN ('planned', 'in_progress');
 
 -- 3. Sessions: User's sessions by status (filtering)
-CREATE INDEX idx_sessions_user_status 
+CREATE INDEX idx_sessions_user_status
 ON sessions(user_id, status);
 
 -- 4. Generations: Rate limiting queries (last 24 hours)
-CREATE INDEX idx_generations_user_created 
+CREATE INDEX idx_generations_user_created
 ON generations(user_id, created_at DESC);
 
 -- 5. Generations: Success rate analytics
-CREATE INDEX idx_generations_status 
+CREATE INDEX idx_generations_status
 ON generations(status);
 
 -- 6. Events: Event type filtering (analytics queries)
-CREATE INDEX idx_events_type 
+CREATE INDEX idx_events_type
 ON events(event_type);
 
 -- 7. Events: User's events timeline
-CREATE INDEX idx_events_user_created 
+CREATE INDEX idx_events_user_created
 ON events(user_id, created_at DESC);
 
 -- 8. Events: JSONB data queries (if needed for specific event types)
-CREATE INDEX idx_events_data_gin 
+CREATE INDEX idx_events_data_gin
 ON events USING GIN (event_data);
 ```
 
 ### Index Usage Patterns
 
-| Index | Query Pattern | PRD Reference |
-|-------|---------------|---------------|
-| `idx_sessions_user_date` | Dashboard last session, history pagination | US-033, US-035 |
-| `idx_one_active_session` | Enforce single active session | US-049, 3.2.6 |
-| `idx_sessions_user_status` | Filter by status (completed/failed/etc.) | US-038 |
-| `idx_generations_user_created` | Rate limiting check (5/24h) | US-027, 3.4.5 |
-| `idx_generations_status` | AI success rate metrics | 6.2.2 |
-| `idx_events_type` | Success metrics by event type | 6.1, 6.2 |
-| `idx_events_user_created` | User activity timeline | Analytics |
-| `idx_events_data_gin` | Complex JSONB queries | Future analytics |
+| Index                          | Query Pattern                              | PRD Reference    |
+| ------------------------------ | ------------------------------------------ | ---------------- |
+| `idx_sessions_user_date`       | Dashboard last session, history pagination | US-033, US-035   |
+| `idx_one_active_session`       | Enforce single active session              | US-049, 3.2.6    |
+| `idx_sessions_user_status`     | Filter by status (completed/failed/etc.)   | US-038           |
+| `idx_generations_user_created` | Rate limiting check (5/24h)                | US-027, 3.4.5    |
+| `idx_generations_status`       | AI success rate metrics                    | 6.2.2            |
+| `idx_events_type`              | Success metrics by event type              | 6.1, 6.2         |
+| `idx_events_user_created`      | User activity timeline                     | Analytics        |
+| `idx_events_data_gin`          | Complex JSONB queries                      | Future analytics |
 
 ---
 
@@ -300,10 +309,10 @@ ON events USING GIN (event_data);
 CREATE OR REPLACE FUNCTION calculate_total_reps()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.total_reps := COALESCE(NEW.set_1, 0) 
-                    + COALESCE(NEW.set_2, 0) 
-                    + COALESCE(NEW.set_3, 0) 
-                    + COALESCE(NEW.set_4, 0) 
+    NEW.total_reps := COALESCE(NEW.set_1, 0)
+                    + COALESCE(NEW.set_2, 0)
+                    + COALESCE(NEW.set_3, 0)
+                    + COALESCE(NEW.set_4, 0)
                     + COALESCE(NEW.set_5, 0);
     RETURN NEW;
 END;
@@ -373,6 +382,7 @@ EXECUTE FUNCTION prevent_immutable_session_modification();
 ```
 
 **Notes:**
+
 - Enforces immutability requirement (US-020 to US-023)
 - Works in conjunction with RLS policies
 - Raises descriptive exception for debugging
@@ -413,11 +423,11 @@ CREATE POLICY "Users can update own active sessions"
 ON sessions
 FOR UPDATE
 USING (
-    auth.uid() = user_id 
+    auth.uid() = user_id
     AND status IN ('planned', 'in_progress')
 )
 WITH CHECK (
-    auth.uid() = user_id 
+    auth.uid() = user_id
     AND status IN ('planned', 'in_progress')
 );
 
@@ -427,7 +437,7 @@ CREATE POLICY "Users can delete own active sessions"
 ON sessions
 FOR DELETE
 USING (
-    auth.uid() = user_id 
+    auth.uid() = user_id
     AND status IN ('planned', 'in_progress')
 );
 ```
@@ -452,6 +462,7 @@ WITH CHECK (auth.role() = 'service_role');
 ```
 
 **Notes:**
+
 - Users have read-only access to their generation history
 - Inserts restricted to service role to prevent manipulation of rate limiting
 
@@ -474,6 +485,7 @@ WITH CHECK (auth.role() = 'service_role');
 ```
 
 **Notes:**
+
 - Read-only access for users (transparency)
 - Service role only for writes (security)
 
@@ -497,6 +509,7 @@ WITH CHECK (auth.role() = 'service_role');
 ```
 
 **Notes:**
+
 - Users can audit their own activity
 - All event logging controlled by application backend
 
@@ -509,6 +522,7 @@ WITH CHECK (auth.role() = 'service_role');
 **Primary Tool:** Supabase CLI with raw SQL migrations
 
 **Migration Files Structure:**
+
 ```
 supabase/migrations/
 ├── 20250110000001_create_enums.sql
@@ -560,6 +574,7 @@ INSERT INTO sessions (
 ### Dashboard Queries
 
 **1. Get current active session:**
+
 ```sql
 SELECT * FROM sessions
 WHERE user_id = $1
@@ -569,6 +584,7 @@ LIMIT 1;
 ```
 
 **2. Get last completed session:**
+
 ```sql
 SELECT * FROM sessions
 WHERE user_id = $1
@@ -582,6 +598,7 @@ LIMIT 1;
 ### History Queries
 
 **3. Paginated history with filters:**
+
 ```sql
 SELECT * FROM sessions
 WHERE user_id = $1
@@ -596,6 +613,7 @@ LIMIT 10 OFFSET $5; -- Pagination
 ### AI Features
 
 **4. Rate limiting check (5 per 24 hours):**
+
 ```sql
 SELECT COUNT(*) FROM generations
 WHERE user_id = $1
@@ -603,8 +621,9 @@ WHERE user_id = $1
 ```
 
 **5. Get recent sessions for AI context (last 5-10):**
+
 ```sql
-SELECT 
+SELECT
     session_date,
     set_1, set_2, set_3, set_4, set_5,
     total_reps,
@@ -618,8 +637,9 @@ LIMIT 10;
 ```
 
 **6. AI generation success rate:**
+
 ```sql
-SELECT 
+SELECT
     COUNT(*) FILTER (WHERE status = 'success') * 100.0 / COUNT(*) as success_rate
 FROM generations
 WHERE created_at > NOW() - INTERVAL '7 days';
@@ -630,8 +650,9 @@ WHERE created_at > NOW() - INTERVAL '7 days';
 ### Warnings and Validations
 
 **7. Check 24-hour rest period:**
+
 ```sql
-SELECT 
+SELECT
     session_date,
     EXTRACT(EPOCH FROM (NOW() - session_date)) / 3600 as hours_since
 FROM sessions
@@ -642,6 +663,7 @@ LIMIT 1;
 ```
 
 **8. Check multiple sessions on same date:**
+
 ```sql
 SELECT COUNT(*) FROM sessions
 WHERE user_id = $1
@@ -654,22 +676,24 @@ WHERE user_id = $1
 ### Success Metrics (PRD 6.1-6.2)
 
 **9. User Activation Rate (≥70% target):**
+
 ```sql
-SELECT 
-    COUNT(DISTINCT CASE 
+SELECT
+    COUNT(DISTINCT CASE
         WHEN EXISTS (
-            SELECT 1 FROM sessions 
-            WHERE sessions.user_id = users.id 
+            SELECT 1 FROM sessions
+            WHERE sessions.user_id = users.id
               AND status = 'completed'
-        ) 
-        THEN users.id 
+        )
+        THEN users.id
     END) * 100.0 / COUNT(*) as activation_rate
 FROM auth.users;
 ```
 
 **10. AI Adoption Rate (≥60% target):**
+
 ```sql
-SELECT 
+SELECT
     COUNT(DISTINCT user_id) * 100.0 / (
         SELECT COUNT(*) FROM auth.users
     ) as ai_adoption_rate
@@ -678,6 +702,7 @@ WHERE status = 'success';
 ```
 
 **11. Average sessions per user:**
+
 ```sql
 SELECT AVG(session_count) as avg_sessions_per_user
 FROM (
@@ -745,11 +770,13 @@ The following validations are handled in application code (not database constrai
 ### 2. Testing Strategy
 
 **Database Testing:**
+
 - Unit tests for trigger functions (calculate_total_reps, immutability)
 - Integration tests for RLS policies (user isolation, service role access)
 - Performance tests for common query patterns with realistic data volume
 
 **Recommended Tools:**
+
 - pgTAP for database unit testing
 - Supabase local development environment
 - Jest/Vitest for integration tests
@@ -757,6 +784,7 @@ The following validations are handled in application code (not database constrai
 ### 3. Monitoring and Alerting
 
 **Key Metrics to Monitor:**
+
 - Slow query log (queries >100ms)
 - Failed trigger executions
 - RLS policy violations
@@ -764,6 +792,7 @@ The following validations are handled in application code (not database constrai
 - Index usage statistics
 
 **Integration Points:**
+
 - Application errors → `generation_error_logs` table
 - All errors → Sentry (external monitoring)
 - Database logs → Supabase dashboard
@@ -772,12 +801,14 @@ The following validations are handled in application code (not database constrai
 ### 4. Performance Considerations
 
 **Expected Data Volume (MVP):**
+
 - Users: 100-1,000
 - Sessions per user: 10-100 (first 3 months)
 - Total sessions: 1,000-100,000
 - Events: 10,000-1,000,000
 
 **Optimization Strategy:**
+
 - Current indexes are sufficient for MVP
 - Monitor slow query log after launch
 - Consider materialized views for admin metrics if needed
@@ -786,11 +817,13 @@ The following validations are handled in application code (not database constrai
 ### 5. Security Notes
 
 **Defense in Depth:**
+
 - RLS policies (primary security layer)
 - Triggers (data integrity layer)
 - Application logic (business rules layer)
 
 **Audit Trail:**
+
 - All user actions logged in `events` table
 - AI generation attempts in `generations` table
 - Errors in `generation_error_logs` table
@@ -799,11 +832,13 @@ The following validations are handled in application code (not database constrai
 ### 6. Backup and Recovery
 
 **Supabase Backup Strategy:**
+
 - Daily automated backups (Supabase Pro plan)
 - Point-in-time recovery (PITR)
 - Manual backup before major migrations
 
 **User Data Deletion (US-007):**
+
 - ON DELETE CASCADE ensures complete removal
 - No soft deletes in MVP
 - Export functionality allows user backup before deletion
@@ -811,6 +846,7 @@ The following validations are handled in application code (not database constrai
 ### 7. Future Schema Extensions
 
 **Post-MVP Considerations:**
+
 - `users_profiles` table (if display_name or preferences added)
 - `training_programs` table (custom programs feature)
 - `exercise_types` table (support for other exercises)
@@ -818,6 +854,7 @@ The following validations are handled in application code (not database constrai
 - Partitioning strategy for large tables
 
 **Schema Versioning:**
+
 - Use Supabase migrations for all changes
 - Never modify existing migrations after deployment
 - Test migrations in staging environment
@@ -836,7 +873,6 @@ This database schema provides a solid foundation for the Pull-Up Training Tracke
 ✅ **AI rate limiting** support (5 per 24 hours)  
 ✅ **Immutability** for completed/failed sessions  
 ✅ **Scalability** for expected MVP load  
-✅ **Security** through defense-in-depth approach  
+✅ **Security** through defense-in-depth approach
 
 The schema is ready for implementation via Supabase CLI migrations and supports all requirements defined in the PRD and session planning notes.
-
