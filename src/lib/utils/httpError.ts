@@ -1,0 +1,93 @@
+interface HttpErrorOptions {
+  status: number;
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+  cause?: unknown;
+}
+
+export class HttpError extends Error {
+  readonly status: number;
+
+  readonly code: string;
+
+  readonly details: Record<string, unknown>;
+
+  constructor(options: HttpErrorOptions) {
+    super(options.message);
+    this.name = "HttpError";
+    this.status = options.status;
+    this.code = options.code;
+    this.details = options.details ?? {};
+
+    if (options.cause !== undefined) {
+      // Node >= 16 supports the `cause` property; assign manually for compatibility.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this as any).cause = options.cause;
+    }
+  }
+}
+
+export function createHttpError(options: HttpErrorOptions): HttpError {
+  return new HttpError(options);
+}
+
+export function isHttpError(error: unknown): error is HttpError {
+  return error instanceof HttpError;
+}
+
+interface ErrorResponseMeta {
+  requestId?: string;
+}
+
+interface NormalisedError {
+  status: number;
+  code: string;
+  message: string;
+  details: Record<string, unknown>;
+}
+
+function normaliseError(error: unknown): NormalisedError {
+  if (isHttpError(error)) {
+    return {
+      status: error.status,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    };
+  }
+
+  return {
+    status: 500,
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Unexpected error occurred",
+    details: {},
+  };
+}
+
+const DEFAULT_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+} as const;
+
+export function buildErrorResponse(error: unknown, meta: ErrorResponseMeta = {}): Response {
+  const normalised = normaliseError(error);
+  const details = { ...normalised.details };
+
+  if (meta.requestId) {
+    details.requestId = meta.requestId;
+  }
+
+  const body = JSON.stringify({
+    error: {
+      code: normalised.code,
+      message: normalised.message,
+      details,
+    },
+  });
+
+  return new Response(body, {
+    status: normalised.status,
+    headers: DEFAULT_HEADERS,
+  });
+}
