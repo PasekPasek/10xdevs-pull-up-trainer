@@ -123,9 +123,9 @@ Unless stated otherwise, all endpoints:
 #### Edit session
 - **Method** `PATCH`
 - **Path** `/sessions/{sessionId}`
-- **Description** Update planned or in-progress sessions (sets, notes, date). Requires `If-Match` header containing last `updatedAt`.
-- **Request JSON** allows `sessionDate`, `sets`, `notes`, `markAsModified` (for AI sessions).
-- **Response JSON**: Updated session object with new `updatedAt` and `isModified` toggled automatically when sets change.
+- **Description** Update planned or in-progress sessions (sets, notes via events, AI comment, date). Requires `If-Match` header containing last `updatedAt`.
+- **Request JSON** allows `sessionDate`, `sets`, `notes`, `aiComment` (only for AI-generated sessions), `markAsModified` (for AI sessions when sets change).
+- **Response JSON**: Updated session object with new `updatedAt`, refreshed `aiComment`, and `isModified` toggled automatically when sets change.
 - **Success codes**: `200 OK`.
 - **Error codes**: `400 Bad Request` (invalid data), `409 Conflict` (ETag mismatch / optimistic lock), `422 Unprocessable Entity` (status disallows edit), `404 Not Found`.
 
@@ -276,53 +276,7 @@ Unless stated otherwise, all endpoints:
 - **Success codes**: `200 OK`.
 - **Error codes**: `401 Unauthorized`.
 
-### 2.7 Exports
-
-#### Initiate export
-- **Method** `POST`
-- **Path** `/exports`
-- **Description** Start generation of CSV/JSON export; creates background job and emits `events` entry (`event_type=export_requested`).
-- **Request JSON**:
-  ```json
-  {
-    "format": "csv",
-    "includeAiComments": true,
-    "dateFrom": "2025-01-01",
-    "dateTo": "2025-02-01"
-  }
-  ```
-- **Response JSON**:
-  ```json
-  {
-    "data": {
-      "exportId": "uuid",
-      "status": "pending"
-    },
-    "meta": { "estimatedReadyAt": "2025-02-01T10:00:05Z" }
-  }
-  ```
-- **Success codes**: `202 Accepted`.
-- **Error codes**: `400 Bad Request`, `429 Too Many Requests` (per-user throttling, e.g., 3 concurrent exports), `500 Internal Server Error`.
-
-#### Poll export
-- **Method** `GET`
-- **Path** `/exports/{exportId}`
-- **Description** Retrieve export status and signed download URL once ready.
-- **Response JSON**:
-  ```json
-  {
-    "data": {
-      "exportId": "uuid",
-      "status": "ready",
-      "downloadUrl": "https://cdn.example.com/exports/uuid.csv",
-      "expiresAt": "2025-02-01T12:00:00Z"
-    }
-  }
-  ```
-- **Success codes**: `200 OK`.
-- **Error codes**: `404 Not Found`, `410 Gone` (expired export).
-
-### 2.8 Events & audit
+### 2.7 Events & audit
 
 #### List user events
 - **Method** `GET`
@@ -334,7 +288,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request`.
 - **Notes**: Write access reserved to service role – no public `POST` route.
 
-### 2.9 Admin metrics (admin-only)
+### 2.8 Admin metrics (admin-only)
 
 All admin routes require token with `role=admin` claim and will additionally verify against Supabase RLS (policy ensures only admins).
 
@@ -364,7 +318,6 @@ All admin routes require token with `role=admin` claim and will additionally ver
 - Rate limiting:
   - Global: 60 requests/minute per user IP via middleware.
   - AI generation: 5 successful generations per rolling 24h; tracked with `generations` table count.
-  - Export initiation: 3 concurrent jobs per user.
 - CSRF protection via SameSite cookies for browser calls; tokens sent via header.
 - All endpoints served over HTTPS; responses set `Cache-Control: no-store` for sensitive data.
 
