@@ -165,7 +165,10 @@ export default function HistoryView() {
   const sessions = data?.data.sessions || [];
   const pagination = data?.data.pagination;
   const hasFilters =
-    (filters.status && filters.status.length > 0) || filters.dateFrom || filters.dateTo || filters.sort !== "sessionDate_desc";
+    (filters.status && filters.status.length > 0) ||
+    filters.dateFrom ||
+    filters.dateTo ||
+    filters.sort !== "sessionDate_desc";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -204,9 +207,7 @@ export default function HistoryView() {
           ) : sessions.length === 0 ? (
             <div className="rounded-lg border border-dashed p-12 text-center">
               <div className="mx-auto flex max-w-md flex-col items-center gap-2">
-                <h3 className="text-lg font-semibold">
-                  {hasFilters ? "No sessions found" : "No sessions yet"}
-                </h3>
+                <h3 className="text-lg font-semibold">{hasFilters ? "No sessions found" : "No sessions yet"}</h3>
                 <p className="text-sm text-muted-foreground">
                   {hasFilters
                     ? "Try adjusting your filters to find more sessions."

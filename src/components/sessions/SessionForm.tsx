@@ -233,9 +233,7 @@ export function SessionForm() {
       <div className="space-y-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Create Training Session</h1>
-          <p className="text-muted-foreground">
-            Plan a session, start training now, or log a historical workout.
-          </p>
+          <p className="text-muted-foreground">Plan a session, start training now, or log a historical workout.</p>
         </div>
 
         {/* Blocking Alert */}
@@ -287,9 +285,7 @@ export function SessionForm() {
                 <SelectItem value="failed">Failed</SelectItem>
               </SelectContent>
             </Select>
-            {errors.status && (
-              <p className="text-sm text-destructive">{errors.status.message}</p>
-            )}
+            {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
           </div>
         )}
 
@@ -316,9 +312,7 @@ export function SessionForm() {
             />
           </div>
         )}
-        {errors.startNow && (
-          <p className="text-sm text-destructive">{errors.startNow.message}</p>
-        )}
+        {errors.startNow && <p className="text-sm text-destructive">{errors.startNow.message}</p>}
 
         {/* Sets Grid */}
         <div className="space-y-3">
@@ -343,9 +337,7 @@ export function SessionForm() {
               </div>
             ))}
           </div>
-          {errors.sets && (
-            <p className="text-sm text-destructive">{errors.sets.message}</p>
-          )}
+          {errors.sets && <p className="text-sm text-destructive">{errors.sets.message}</p>}
 
           {/* Running Total */}
           <div className="flex items-center justify-between p-3 bg-muted rounded-md">
@@ -368,8 +360,7 @@ export function SessionForm() {
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
                     <p>
-                      Rate how hard the session felt on a scale of 1-10,
-                      where 1 is very easy and 10 is maximum effort.
+                      Rate how hard the session felt on a scale of 1-10, where 1 is very easy and 10 is maximum effort.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -393,9 +384,7 @@ export function SessionForm() {
                 <span>Max (10)</span>
               </div>
             </div>
-            {errors.rpe && (
-              <p className="text-sm text-destructive">{errors.rpe.message}</p>
-            )}
+            {errors.rpe && <p className="text-sm text-destructive">{errors.rpe.message}</p>}
           </div>
         )}
 

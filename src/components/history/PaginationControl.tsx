@@ -34,17 +34,8 @@ export function PaginationControl({ currentPage, totalPages, onPageChange }: Pag
   };
 
   return (
-    <nav
-      className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-      aria-label="Pagination"
-    >
-      <div
-        id="pagination-status"
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+    <nav className="flex items-center justify-between gap-4 rounded-lg border bg-card p-4" aria-label="Pagination">
+      <div id="pagination-status" className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         Page {currentPage} of {totalPages}
       </div>
 

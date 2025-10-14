@@ -219,7 +219,12 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
         )}
 
         {session.actions.includes("edit") && (
-          <Button onClick={() => setEditDialogOpen(true)} disabled={isAnyMutationLoading} variant="outline" className="gap-2">
+          <Button
+            onClick={() => setEditDialogOpen(true)}
+            disabled={isAnyMutationLoading}
+            variant="outline"
+            className="gap-2"
+          >
             <Edit className="h-4 w-4" />
             Edit
           </Button>

@@ -87,16 +87,8 @@ export function HeaderNav({ currentPath }: HeaderNavProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          {user && (
-            <div className="hidden sm:block text-sm text-muted-foreground">{user.email}</div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            disabled={isLoading}
-            className="gap-2"
-          >
+          {user && <div className="hidden sm:block text-sm text-muted-foreground">{user.email}</div>}
+          <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={isLoading} className="gap-2">
             <LogOut className="h-4 w-4" aria-hidden="true" />
             <span>Sign Out</span>
           </Button>
@@ -113,9 +105,7 @@ export function HeaderNav({ currentPath }: HeaderNavProps) {
                   key={item.href}
                   href={item.href}
                   className={`flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium rounded-md ${
-                    currentPath === item.href
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                    currentPath === item.href ? "text-primary" : "text-muted-foreground"
                   }`}
                   aria-current={currentPath === item.href ? "page" : undefined}
                 >

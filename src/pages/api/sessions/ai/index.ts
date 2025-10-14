@@ -10,7 +10,7 @@ export const prerender = false;
 
 const generateAiSessionSchema = z.object({
   startNow: z.boolean().optional().default(false),
-  maxPullups: z.number().int().min(1).max(60),
+  maxPullups: z.number().int().min(1).max(60).optional(),
   model: z.string().min(1).default("gpt-4o-mini"),
 });
 

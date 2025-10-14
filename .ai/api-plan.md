@@ -52,6 +52,7 @@ Unless stated otherwise, all endpoints:
 - **Description** Create manual or historical session subject to single-active constraint and date rules.
 - **Query parameters**: none.
 - **Request JSON**:
+
   ```json
   {
     "status": "planned",
@@ -66,6 +67,7 @@ Unless stated otherwise, all endpoints:
   - `status` options: `planned`, `completed`, `failed` (historical only); default `planned`.
   - `sets` entries must be integers 1-60 or null when not yet performed.
   - `startNow=true` immediately transitions to `in_progress`.
+
 - **Response JSON**:
   ```json
   {
@@ -220,6 +222,7 @@ Unless stated otherwise, all endpoints:
 - **Path** `/sessions/ai`
 - **Description** Request AI-generated session; enforces rate limit, collects new-user max reps when needed; creates `sessions` + `generations` rows transactionally.
 - **Request JSON**:
+
   ```json
   {
     "startNow": false,
@@ -229,6 +232,7 @@ Unless stated otherwise, all endpoints:
   ```
 
   - `maxPullups` required only when user lacks history.
+
 - **Response JSON**:
   ```json
   {

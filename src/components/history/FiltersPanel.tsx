@@ -34,9 +34,7 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
 
   const handleStatusToggle = (status: SessionStatus, checked: boolean) => {
     const currentStatuses = filters.status || [];
-    const newStatuses = checked
-      ? [...currentStatuses, status]
-      : currentStatuses.filter((s) => s !== status);
+    const newStatuses = checked ? [...currentStatuses, status] : currentStatuses.filter((s) => s !== status);
 
     onChange({
       ...filters,
@@ -112,10 +110,7 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
         </div>
       </CardHeader>
 
-      <CardContent
-        id="filters-content"
-        className={`space-y-6 ${isCollapsed ? "hidden lg:block" : ""}`}
-      >
+      <CardContent id="filters-content" className={`space-y-6 ${isCollapsed ? "hidden lg:block" : ""}`}>
         {/* Status Filter */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Status</Label>
@@ -125,15 +120,10 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
                 <Checkbox
                   id={`status-${option.value}`}
                   checked={filters.status?.includes(option.value) || false}
-                  onCheckedChange={(checked) =>
-                    handleStatusToggle(option.value, checked as boolean)
-                  }
+                  onCheckedChange={(checked) => handleStatusToggle(option.value, checked as boolean)}
                   aria-label={`Filter by ${option.label} status`}
                 />
-                <Label
-                  htmlFor={`status-${option.value}`}
-                  className="text-sm font-normal cursor-pointer"
-                >
+                <Label htmlFor={`status-${option.value}`} className="text-sm font-normal cursor-pointer">
                   {option.label}
                 </Label>
               </div>
@@ -147,10 +137,7 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
 
           <div className="space-y-3">
             <Select value={datePreset} onValueChange={handleDatePresetChange}>
-              <SelectTrigger
-                className="w-full"
-                aria-label="Select date range preset"
-              >
+              <SelectTrigger className="w-full" aria-label="Select date range preset">
                 <SelectValue placeholder="Select preset" />
               </SelectTrigger>
               <SelectContent>
@@ -194,10 +181,7 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
         {/* Sort Order */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Sort Order</Label>
-          <Select
-            value={filters.sort || "sessionDate_desc"}
-            onValueChange={handleSortChange}
-          >
+          <Select value={filters.sort || "sessionDate_desc"} onValueChange={handleSortChange}>
             <SelectTrigger className="w-full" aria-label="Select sort order">
               <SelectValue />
             </SelectTrigger>
@@ -210,12 +194,7 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={onClear}
-            aria-label="Clear all filters"
-          >
+          <Button variant="outline" className="w-full" onClick={onClear} aria-label="Clear all filters">
             <X className="size-4 mr-2" aria-hidden="true" />
             Clear Filters
           </Button>

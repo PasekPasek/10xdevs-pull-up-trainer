@@ -157,6 +157,23 @@ export interface AiQuotaDTO {
 
 export type AiQuotaResponse = ApiEnvelope<AiQuotaDTO, ApiMetaBase>;
 
+export interface HistoricalSessionDTO {
+  sessionDate: SessionRow["session_date"];
+  sets: SessionSets;
+  status: SessionStatus;
+  totalReps?: SessionRow["total_reps"];
+  rpe?: SessionRow["rpe"];
+}
+
+export interface AiStructuredResponseNew {
+  sets: [number, number, number, number, number];
+  comment: string;
+}
+
+export interface AiStructuredResponseExisting extends AiStructuredResponseNew {
+  sessionDate: SessionRow["session_date"];
+}
+
 export interface GenerateAiSessionCommand {
   startNow?: boolean;
   maxPullups?: number;

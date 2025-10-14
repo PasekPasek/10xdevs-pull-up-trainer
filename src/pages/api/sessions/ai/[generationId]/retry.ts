@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 
 import { buildErrorResponse, createHttpError } from "../../../../../lib/utils/httpError";
-import { generateAiSession } from "../../../../../lib/services/ai/generateSession";
+import { generateAiSession, fetchRecentSessionsForUser } from "../../../../../lib/services/ai/generateSession";
 import { getQuota } from "../../../../../lib/services/ai/getQuota";
 import { mapSessionRowToDTO } from "../../../../../lib/services/sessions/mappers";
 
@@ -91,30 +91,25 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Check if generation already succeeded
-    if (generation.status === "success") {
-      throw createHttpError({
-        status: 409,
-        code: "GENERATION_ALREADY_SUCCEEDED",
-        message: "Generation already succeeded. Cannot retry.",
-        details: { generationId },
-      });
+    const recentSessions = await fetchRecentSessionsForUser(supabase, userResult.user.id);
+    const isNewUser = recentSessions.length === 0;
+
+    let maxPullups: number | undefined;
+
+    if (isNewUser) {
+      const promptData = generation.prompt_data as { maxPullups?: number } | null;
+      maxPullups = promptData?.maxPullups;
+
+      if (typeof maxPullups !== "number") {
+        throw createHttpError({
+          status: 400,
+          code: "INVALID_PROMPT_DATA",
+          message: "Original generation missing maxPullups data",
+          details: { generationId },
+        });
+      }
     }
 
-    // Extract maxPullups from prompt_data
-    const promptData = generation.prompt_data as Record<string, unknown> | null;
-    const maxPullups = promptData?.maxPullups;
-
-    if (typeof maxPullups !== "number") {
-      throw createHttpError({
-        status: 400,
-        code: "INVALID_PROMPT_DATA",
-        message: "Original generation missing maxPullups data",
-        details: { generationId },
-      });
-    }
-
-    // Retry generation (note: retries don't count against quota for failed attempts)
     const { session, generation: newGeneration } = await generateAiSession(
       { supabase },
       userResult.user.id,

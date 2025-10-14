@@ -3,6 +3,7 @@
 ### 1. Opis usługi
 
 Usługa OpenRouter integruje aplikację z API OpenRouter w celu generowania sesji treningowych opartych na LLM. Dostarcza zunifikowany interfejs do:
+
 - budowania komunikatów (system, user),
 - konfiguracji modelu i parametrów inferencji,
 - wymuszania ustrukturyzowanych odpowiedzi (response_format z JSON Schema),
@@ -15,6 +16,7 @@ Zgodnie z PRD i planami API, usługa musi zwracać: 5 serii powtórzeń, datę s
 ### 2. Opis konstruktora
 
 Proponowana klasa: `OpenRouterService` (TS), zasilana przez konfigurację i zależności (DI):
+
 - `fetchImpl`: funkcja fetch (domyślnie globalny fetch) z kontrolą timeoutu,
 - `apiKey`: klucz do OpenRouter (`process.env.OPENROUTER_API_KEY`),
 - `baseUrl`: `https://openrouter.ai/api/v1` (możliwa zmiana via config),
@@ -41,6 +43,7 @@ Inicjalizacja (w `src/lib/services/ai/openrouter.ts`): wstrzykujemy poprzez funk
 - `schemas` (readonly): obiekty JSON Schema dla obu wariantów.
 
 Typy:
+
 - `AiStructuredResponseNew`:
   - `{ sets: [number,number,number,number,number]; comment: string }`
 - `AiStructuredResponseExisting`:
@@ -65,6 +68,7 @@ Typy:
 ### 5. Obsługa błędów
 
 Potencjalne scenariusze (kod – opis – strategia):
+
 1. `401/403` – brak/nieprawidłowy klucz API – zwróć `PROVIDER_AUTH_FAILED`, zaloguj, przerzuć do warstwy API jako `502`.
 2. `408` – timeout modelu (>15s) – `AI_TIMEOUT`, zapisz `generations` z `status=timeout`, udostępnij retry.
 3. `5xx` dostawcy – `PROVIDER_UNAVAILABLE` – `502 Bad Gateway`, nie konsumuj limitu.
@@ -87,60 +91,64 @@ Każdy błąd: loguj (Sentry), wpis do `generation_error_logs` (status `error` l
 
 ### 7. Plan wdrożenia krok po kroku
 
-1) Konfiguracja i zależności
+1. Konfiguracja i zależności
+
 - Dodaj `OPENROUTER_API_KEY` do `.env` i `src/env.d.ts` (już zadeklarowane).
 - Utwórz plik `src/lib/services/ai/openrouter.ts` z klasą `OpenRouterService` oraz fabryką `createOpenRouterService()` pobierającą API key z env.
 
-2) JSON Schema (response_format)
+2. JSON Schema (response_format)
+
 - Zdefiniuj dwa schematy:
+
   ```ts
   export const AiResponseSchemaNew = {
-    type: 'json_schema',
+    type: "json_schema",
     json_schema: {
-      name: 'pullup_session_new_v1',
+      name: "pullup_session_new_v1",
       strict: true,
       schema: {
-        type: 'object',
+        type: "object",
         additionalProperties: false,
-        required: ['sets', 'comment'],
+        required: ["sets", "comment"],
         properties: {
           sets: {
-            type: 'array',
-            items: { type: 'integer', minimum: 1, maximum: 60 },
+            type: "array",
+            items: { type: "integer", minimum: 1, maximum: 60 },
             minItems: 5,
-            maxItems: 5
+            maxItems: 5,
           },
-          comment: { type: 'string', minLength: 10, maxLength: 400 }
-        }
-      }
-    }
+          comment: { type: "string", minLength: 10, maxLength: 400 },
+        },
+      },
+    },
   } as const;
 
   export const AiResponseSchemaExisting = {
-    type: 'json_schema',
+    type: "json_schema",
     json_schema: {
-      name: 'pullup_session_existing_v1',
+      name: "pullup_session_existing_v1",
       strict: true,
       schema: {
-        type: 'object',
+        type: "object",
         additionalProperties: false,
-        required: ['sets', 'sessionDate', 'comment'],
+        required: ["sets", "sessionDate", "comment"],
         properties: {
           sets: {
-            type: 'array',
-            items: { type: 'integer', minimum: 1, maximum: 60 },
+            type: "array",
+            items: { type: "integer", minimum: 1, maximum: 60 },
             minItems: 5,
-            maxItems: 5
+            maxItems: 5,
           },
-          sessionDate: { type: 'string', format: 'date-time' },
-          comment: { type: 'string', minLength: 10, maxLength: 400 }
-        }
-      }
-    }
+          sessionDate: { type: "string", format: "date-time" },
+          comment: { type: "string", minLength: 10, maxLength: 400 },
+        },
+      },
+    },
   } as const;
   ```
 
-3) Komunikaty (system i user)
+3. Komunikaty (system i user)
+
 - Nowy użytkownik – system:
   ```
   Jesteś trenerem generującym plan podciągnięć. Zwracasz wyłącznie JSON zgodny ze schematem. Zaplanuj 5 serii (1–60) oraz krótki komentarz (2–3 zdania, 40–60 słów). Nie zwracaj daty. Data sesji zostanie ustawiona przez system na dzisiaj (UTC ISO).
@@ -165,62 +173,69 @@ Każdy błąd: loguj (Sentry), wpis do `generation_error_logs` (status `error` l
   Dzisiejsza data: 2025-02-02T09:00:00Z. Zaproponuj następny trening nie wcześniej niż dzisiaj.
   ```
 
-4) Wywołanie OpenRouter (model i parametry)
+4. Wywołanie OpenRouter (model i parametry)
+
 - Przykładowe `callOpenRouter` (warianty różnią się `response_format`):
   ```ts
   const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://your-app.example',
-      'X-Title': '10xdevs Pull-Up Trainer'
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://your-app.example",
+      "X-Title": "10xdevs Pull-Up Trainer",
     },
     body: JSON.stringify({
       model: modelName ?? defaultModel,
       messages: [
-        { role: 'system', content: systemMessage },
-        { role: 'user', content: userMessage }
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
       ],
       response_format: isNewUser ? AiResponseSchemaNew : AiResponseSchemaExisting,
       temperature: params?.temperature ?? 0.7,
       top_p: params?.top_p ?? 1,
-      max_tokens: params?.max_tokens ?? 300
-    })
+      max_tokens: params?.max_tokens ?? 300,
+    }),
   });
   ```
 
-5) Walidacja i normalizacja wyniku
+5. Walidacja i normalizacja wyniku
+
 - Nowy użytkownik: zparsuj `{ sets, comment }`, zweryfikuj zakresy, ustaw `sessionDate = _todayIso()` już w serwisie.
 - Istniejący użytkownik: zparsuj `{ sets, sessionDate, comment }`, zweryfikuj, że `sessionDate >= todayIso` (jeśli nie – podnieś `AI_INVALID_OUTPUT`).
 - Clip do [1,60], w razie potrzeby loguj ostrzeżenia `schema_adjustment`.
 
-6) Integracja z aktualnym serwisem generowania
+6. Integracja z aktualnym serwisem generowania
+
 - W `src/lib/services/ai/generateSession.ts`:
   - Zastąp obecny mock wywołaniem `OpenRouterService`.
   - Gałąź nowego użytkownika: nie pobieraj historii; wywołaj `generateForNewUser`; ustaw `sessionDate = today` w payloadzie sesji; zapisz `response_data: { sets, comment }` (bez daty od modelu).
   - Gałąź istniejącego: pobierz do 10 ostatnich sesji; wywołaj `generateForExistingUser({ sessions, todayIso })`; użyj zwróconego `sessionDate` w payloadzie sesji; zapisz `response_data: { sets, comment, sessionDate }`.
   - Pozostałe kroki (quota, events, transakcje) bez zmian.
 
-7) Przykłady parametryzacji
-1. Komunikat systemowy – patrz 3 (oddzielne instrukcje dla nowego/istniejącego użytkownika).
-2. Komunikat użytkownika – patrz 3 (user message z `maxPullups` lub historią i `todayIso`).
-3. Ustrukturyzowane odpowiedzi – użyj dokładnie:
+7. Przykłady parametryzacji
+
+1) Komunikat systemowy – patrz 3 (oddzielne instrukcje dla nowego/istniejącego użytkownika).
+2) Komunikat użytkownika – patrz 3 (user message z `maxPullups` lub historią i `todayIso`).
+3) Ustrukturyzowane odpowiedzi – użyj dokładnie:
    ```ts
    { type: 'json_schema', json_schema: { name: 'pullup_session_new_v1' | 'pullup_session_existing_v1', strict: true, schema: {/* jw. */} } }
    ```
-4. Nazwa modelu – przekaż z parametru API (`body.model`) lub domyślnie `gpt-4o-mini`.
-5. Parametry modelu – `temperature`, `top_p`, `max_tokens` w ciele POST; domyślnie 0.7/1/300.
+4) Nazwa modelu – przekaż z parametru API (`body.model`) lub domyślnie `gpt-4o-mini`.
+5) Parametry modelu – `temperature`, `top_p`, `max_tokens` w ciele POST; domyślnie 0.7/1/300.
 
-8) Timeout i retry
+8. Timeout i retry
+
 - Użyj `AbortController` z 15s.
 - W przypadku `timeout` zapisz `generations.status='timeout'`, zwróć `408` w endpoint i nie konsumuj limitu. Zapewnij `/sessions/ai/{generationId}/retry`.
 
-9) Testy
+9. Testy
+
 - Jednostkowe: walidacja schematu (osobno new/existing), clipping, budowa promptów, kontrola daty >= today dla existing.
 - Integracyjne: `403` quota, `408` timeout, `502` provider error, `AI_INVALID_OUTPUT` (data w przeszłości), brak `sessionDate` dla existing.
 
-10) Zmiany w UI (informacyjne)
+10. Zmiany w UI (informacyjne)
+
 - Brak zmian w kontrakcie API: odpowiedź już zawiera `session` i `generation`. Komentarz AI i data są mapowane do sesji (data: today dla new, z AI dla existing).
 
 — koniec —

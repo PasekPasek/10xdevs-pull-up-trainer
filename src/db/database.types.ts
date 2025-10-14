@@ -88,6 +88,8 @@ export interface Database {
           duration_ms: number;
           id: string;
           model: string;
+          prompt_data: Json | null;
+          response_data: Json | null;
           session_id: string | null;
           status: Database["public"]["Enums"]["generation_status"];
           user_id: string;
@@ -97,6 +99,8 @@ export interface Database {
           duration_ms: number;
           id?: string;
           model: string;
+          prompt_data?: Json | null;
+          response_data?: Json | null;
           session_id?: string | null;
           status: Database["public"]["Enums"]["generation_status"];
           user_id: string;
@@ -106,6 +110,8 @@ export interface Database {
           duration_ms?: number;
           id?: string;
           model?: string;
+          prompt_data?: Json | null;
+          response_data?: Json | null;
           session_id?: string | null;
           status?: Database["public"]["Enums"]["generation_status"];
           user_id?: string;

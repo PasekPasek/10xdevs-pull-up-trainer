@@ -37,6 +37,10 @@ create table generations (
     
     -- Generation outcome
     status generation_status not null,
+
+    -- Structured payloads for auditing
+    prompt_data jsonb,
+    response_data jsonb,
     
     -- Audit timestamp
     created_at timestamptz not null default now()
