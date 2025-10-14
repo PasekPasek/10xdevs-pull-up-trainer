@@ -1,6 +1,7 @@
 # REST API Plan
 
 ## 1. Resources
+
 - `users` – Supabase `auth.users`; source of authenticated identities and ownership for domain records.
 - `sessions` – Table `sessions`; stores pull-up training sessions including sets, status, AI metadata, timestamps.
 - `sessionActions` – Derived from `sessions`; encapsulates state transitions (planned → in_progress → completed/failed) with validation guards.
@@ -14,6 +15,7 @@
 ## 2. Endpoints
 
 Unless stated otherwise, all endpoints:
+
 - Require `Authorization: Bearer <Supabase JWT>` issued via Supabase Auth.
 - Accept/return `application/json`.
 - Respond with a standard envelope:
@@ -27,6 +29,7 @@ Unless stated otherwise, all endpoints:
 - Support optimistic concurrency through `If-Match`/`ETag` headers carrying the session `updated_at` (when applicable).
 
 ### 2.1 Authentication (Supabase managed)
+
 - **Method** `POST`
 - **Path** `/auth/v1/token?grant_type=password`
 - **Description** Password login via Supabase Auth REST endpoint.
@@ -43,6 +46,7 @@ Unless stated otherwise, all endpoints:
 ### 2.2 Sessions
 
 #### Create session
+
 - **Method** `POST`
 - **Path** `/sessions`
 - **Description** Create manual or historical session subject to single-active constraint and date rules.
@@ -58,6 +62,7 @@ Unless stated otherwise, all endpoints:
     "startNow": false
   }
   ```
+
   - `status` options: `planned`, `completed`, `failed` (historical only); default `planned`.
   - `sets` entries must be integers 1-60 or null when not yet performed.
   - `startNow=true` immediately transitions to `in_progress`.
@@ -80,9 +85,7 @@ Unless stated otherwise, all endpoints:
       }
     },
     "meta": {
-      "warnings": [
-        { "code": "REST_PERIOD", "message": "Last session was 18 hours ago" }
-      ]
+      "warnings": [{ "code": "REST_PERIOD", "message": "Last session was 18 hours ago" }]
     }
   }
   ```
@@ -90,6 +93,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request` (validation, invalid reps/date), `403 Forbidden` (attempt to create historical planned), `409 Conflict` (existing active session), `422 Unprocessable Entity` (rest-period conflict acknowledged but blocked per policy override), `500 Internal Server Error`.
 
 #### List sessions (history)
+
 - **Method** `GET`
 - **Path** `/sessions`
 - **Description** Paginated history with filtering, sorting, and persisted preferences.
@@ -103,7 +107,18 @@ Unless stated otherwise, all endpoints:
   ```json
   {
     "data": {
-      "sessions": [ { "id": "uuid", "status": "completed", "sessionDate": "...", "sets": [12, 15, 13, 11, 14], "totalReps": 65, "rpe": 7, "aiComment": "...", "isModified": false } ],
+      "sessions": [
+        {
+          "id": "uuid",
+          "status": "completed",
+          "sessionDate": "...",
+          "sets": [12, 15, 13, 11, 14],
+          "totalReps": 65,
+          "rpe": 7,
+          "aiComment": "...",
+          "isModified": false
+        }
+      ],
       "pagination": { "page": 1, "pageSize": 10, "totalPages": 5, "totalItems": 47 }
     },
     "meta": { "filters": { "status": ["completed"], "dateFrom": "2025-01-01" } }
@@ -113,6 +128,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request` (invalid filters), `401 Unauthorized`.
 
 #### Get session
+
 - **Method** `GET`
 - **Path** `/sessions/{sessionId}`
 - **Description** Retrieve single session; includes immutable flag and edit permissions.
@@ -121,6 +137,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `404 Not Found`, `403 Forbidden` (access outside tenant via RLS failure).
 
 #### Edit session
+
 - **Method** `PATCH`
 - **Path** `/sessions/{sessionId}`
 - **Description** Update planned or in-progress sessions (sets, notes via events, AI comment, date). Requires `If-Match` header containing last `updatedAt`.
@@ -130,6 +147,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request` (invalid data), `409 Conflict` (ETag mismatch / optimistic lock), `422 Unprocessable Entity` (status disallows edit), `404 Not Found`.
 
 #### Delete session
+
 - **Method** `DELETE`
 - **Path** `/sessions/{sessionId}`
 - **Description** Remove planned or in-progress session after confirmation.
@@ -139,6 +157,7 @@ Unless stated otherwise, all endpoints:
 ### 2.3 Session actions
 
 #### Start session
+
 - **Method** `POST`
 - **Path** `/sessions/{sessionId}/start`
 - **Description** Transition planned session to `in_progress`; records timestamp.
@@ -148,6 +167,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `409 Conflict` (already in active state), `422 Unprocessable Entity` (status not planned).
 
 #### Complete session
+
 - **Method** `POST`
 - **Path** `/sessions/{sessionId}/complete`
 - **Description** Mark session completed, validate at least one rep > 0, optionally capture RPE and final sets.
@@ -164,6 +184,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request` (all sets zero, out-of-range reps), `409 Conflict` (status not in_progress), `422 Unprocessable Entity` (rest constraint if enforced at completion in future).
 
 #### Fail session
+
 - **Method** `POST`
 - **Path** `/sessions/{sessionId}/fail`
 - **Description** Mark in-progress session as failed.
@@ -175,6 +196,7 @@ Unless stated otherwise, all endpoints:
 ### 2.4 AI sessions & quota
 
 #### Get AI quota
+
 - **Method** `GET`
 - **Path** `/sessions/ai/quota`
 - **Description** Remaining AI generations for 24h window plus reset countdown.
@@ -193,6 +215,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `401 Unauthorized`.
 
 #### Generate AI session
+
 - **Method** `POST`
 - **Path** `/sessions/ai`
 - **Description** Request AI-generated session; enforces rate limit, collects new-user max reps when needed; creates `sessions` + `generations` rows transactionally.
@@ -204,6 +227,7 @@ Unless stated otherwise, all endpoints:
     "model": "gpt-4o-mini"
   }
   ```
+
   - `maxPullups` required only when user lacks history.
 - **Response JSON**:
   ```json
@@ -219,6 +243,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `400 Bad Request` (missing maxPullups, invalid response from AI), `403 Forbidden` (rate limit exceeded), `408 Request Timeout` (AI >15s), `502 Bad Gateway` (provider error), `500 Internal Server Error`.
 
 #### Retry AI generation
+
 - **Method** `POST`
 - **Path** `/sessions/ai/{generationId}/retry`
 - **Description** Retry failed/timeout generation without consuming quota until success; reuses context.
@@ -227,6 +252,7 @@ Unless stated otherwise, all endpoints:
 - **Error codes**: `404 Not Found`, `409 Conflict` (generation already succeeded), `429 Too Many Requests` (backoff enforcement).
 
 #### List AI generations
+
 - **Method** `GET`
 - **Path** `/sessions/ai/history`
 - **Description** User-visible history of AI generations with outcomes and linked sessions.
@@ -237,6 +263,7 @@ Unless stated otherwise, all endpoints:
 ### 2.5 Validation helpers
 
 #### Evaluate session creation constraints
+
 - **Method** `GET`
 - **Path** `/sessions/validation`
 - **Description** Preflight checks for a prospective session date/status combination.
@@ -246,9 +273,7 @@ Unless stated otherwise, all endpoints:
   {
     "data": {
       "blocking": false,
-      "warnings": [
-        { "code": "MULTIPLE_SAME_DAY", "message": "You already completed a session on 2025-02-01" }
-      ],
+      "warnings": [{ "code": "MULTIPLE_SAME_DAY", "message": "You already completed a session on 2025-02-01" }],
       "lastCompletedSession": { "id": "uuid", "hoursSince": 18 }
     }
   }
@@ -259,6 +284,7 @@ Unless stated otherwise, all endpoints:
 ### 2.6 Dashboard
 
 #### Fetch dashboard snapshot
+
 - **Method** `GET`
 - **Path** `/dashboard`
 - **Description** Aggregate data for main dashboard: last completed session, active session, AI quota, outstanding warnings.
@@ -279,6 +305,7 @@ Unless stated otherwise, all endpoints:
 ### 2.7 Events & audit
 
 #### List user events
+
 - **Method** `GET`
 - **Path** `/events`
 - **Description** Paginated view of user’s audit trail.
@@ -293,6 +320,7 @@ Unless stated otherwise, all endpoints:
 All admin routes require token with `role=admin` claim and will additionally verify against Supabase RLS (policy ensures only admins).
 
 #### Fetch KPI summary
+
 - **Method** `GET`
 - **Path** `/admin/metrics`
 - **Description** Returns aggregate KPIs (total users, sessions, activation rate, AI adoption rate, failure rate, rest-period correlation).
@@ -301,16 +329,19 @@ All admin routes require token with `role=admin` claim and will additionally ver
 - **Error codes**: `403 Forbidden`, `401 Unauthorized`.
 
 #### Fetch AI reliability metrics
+
 - **Method** `GET`
 - **Path** `/admin/metrics/ai`
 - **Description** Time-windowed AI generation stats (success%, average latency, failure breakdown).
 
 #### Fetch recent errors
+
 - **Method** `GET`
 - **Path** `/admin/generation-errors`
 - **Description** Paginated list of entries from `generation_error_logs` with filters by `errorType`, date.
 
 ## 3. Authentication and Authorization
+
 - Supabase GoTrue handles user registration, login, password flows; front-end calls Supabase directly.
 - API routes validate JWT via Supabase Admin SDK (`supabase.auth.getUser`), extracting `user_id` for RLS alignment.
 - Astro API routes run with Service Role key for server-to-DB interaction; enforce user ownership at application layer to complement RLS.
@@ -324,6 +355,7 @@ All admin routes require token with `role=admin` claim and will additionally ver
 ## 4. Validation and Business Logic
 
 ### Sessions
+
 - Validate status transitions: `planned` → `in_progress` → (`completed`|`failed`); historical creation only permits `completed`/`failed`.
 - Enforce single active session: check before create or start; handle database `idx_one_active_session` conflicts gracefully with 409.
 - Set reps must be integers 1-60; allow null for not-yet-performed sets; ensure at least one rep > 0 before completion.
@@ -337,6 +369,7 @@ All admin routes require token with `role=admin` claim and will additionally ver
 - Store `(modified)` indicator automatically when AI session fields change; `isModified` toggled when incoming sets differ.
 
 ### AI Generations
+
 - Before calling model, verify quota using `generations` count in last 24h; respond `403` with `AI_LIMIT_REACHED`.
 - Timeout AI responses at 15 seconds; on timeout, log entry with `status=timeout` and return `408`.
 - On failure, log into `generation_error_logs` with stack/message; response instructs user to retry; attempts that fail do not decrement quota.
@@ -345,20 +378,24 @@ All admin routes require token with `role=admin` claim and will additionally ver
 - Preserve AI comment on edits; append "(modified)" when user adjusts sets.
 
 ### Dashboard & Validation Helpers
+
 - `GET /dashboard` composes: last completed session (ordered by `session_date DESC`), active session (status in planned/in_progress), AI quota, warnings.
 - `GET /sessions/validation` uses same logic as create but no persistence; attaches reasons for blocking/warning to encourage consistent UX.
 
 ### Events & Metrics
+
 - Every session lifecycle change emits corresponding event (per PRD §6.3) with structured payload; service routes ensure event emission occurs in DB transaction.
 - `events` endpoint exposes read-only audit trail to users; respects pagination and filtering.
 - Admin metrics aggregate: activation rate, AI adoption, average sessions per user; heavy queries may use materialized views refreshed hourly.
 
 ### Exports
+
 - Validate requested format (`csv` or `json`); enforce date range sanity.
 - Exports generated asynchronously; job writes `events` with progress; final file stored in object storage with signed URL.
 - Completed exports auto-expire after 24 hours.
 
 ### General
+
 - Input validation centralized via zod/valibot schemas in Astro API routes.
 - Standard error payload:
   ```json

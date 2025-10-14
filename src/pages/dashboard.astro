@@ -1,0 +1,8 @@
+---
+import AuthenticatedLayout from "../layouts/AuthenticatedLayout.astro";
+import DashboardView from "../components/dashboard/DashboardView";
+---
+
+<AuthenticatedLayout title="Dashboard - Pull-Up Trainer">
+  <DashboardView client:load />
+</AuthenticatedLayout>

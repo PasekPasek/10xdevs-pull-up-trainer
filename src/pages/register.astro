@@ -1,0 +1,37 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { QueryClientProvider } from "../lib/providers/QueryClientProvider";
+import { Toaster } from "../components/ui/sonner";
+import RegisterForm from "../components/auth/RegisterForm";
+---
+
+<Layout title="Create Account - Pull-Up Trainer">
+  <main class="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold tracking-tight mb-2">
+          Create your account
+        </h1>
+        <p class="text-muted-foreground">
+          Start tracking your pull-up progress today
+        </p>
+      </div>
+
+      <QueryClientProvider client:load>
+        <RegisterForm client:load />
+      </QueryClientProvider>
+
+      <p class="text-center mt-6 text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <a
+          href="/login"
+          class="font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+        >
+          Sign in
+        </a>
+      </p>
+    </div>
+
+    <Toaster client:load />
+  </main>
+</Layout>

@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AdminMetricsView from "../components/admin/AdminMetricsView";
+---
+
+<Layout title="Admin Metrics - Pull-Up Trainer">
+  <main class="min-h-screen bg-background text-foreground">
+    <AdminMetricsView client:load />
+  </main>
+</Layout>

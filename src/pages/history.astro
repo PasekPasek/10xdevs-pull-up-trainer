@@ -1,0 +1,13 @@
+---
+import AuthenticatedLayout from "../layouts/AuthenticatedLayout.astro";
+import { QueryClientProvider } from "../lib/providers/QueryClientProvider";
+import HistoryView from "../components/history/HistoryView";
+---
+
+<AuthenticatedLayout title="History - Pull-Up Trainer">
+  <div class="min-h-screen bg-background text-foreground">
+    <QueryClientProvider client:load>
+      <HistoryView client:load />
+    </QueryClientProvider>
+  </div>
+</AuthenticatedLayout>

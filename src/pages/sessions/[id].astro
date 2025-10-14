@@ -1,0 +1,16 @@
+---
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout.astro";
+import { SessionDetailsView } from "@/components/sessions/SessionDetailsView";
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<AuthenticatedLayout title="Session Details - Pull-Up Trainer">
+  <div class="container mx-auto max-w-3xl px-4 py-8">
+    <SessionDetailsView client:load sessionId={id} />
+  </div>
+</AuthenticatedLayout>

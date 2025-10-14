@@ -91,3 +91,49 @@ export function buildErrorResponse(error: unknown, meta: ErrorResponseMeta = {})
     headers: DEFAULT_HEADERS,
   });
 }
+
+export async function createApiRequest<TData>(input: RequestInfo, init?: RequestInit): Promise<TData> {
+  const response = await fetch(input, init);
+
+  if (!response.ok) {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      throw createHttpError({
+        status: response.status,
+        code: "HTTP_ERROR",
+        message: response.statusText || "Request failed",
+        details: { cause: error },
+      });
+    }
+
+    if (typeof payload === "object" && payload !== null && "error" in payload) {
+      const apiError = payload.error as { code?: string; message?: string; details?: Record<string, unknown> };
+      throw createHttpError({
+        status: response.status,
+        code: apiError.code ?? "HTTP_ERROR",
+        message: apiError.message ?? response.statusText ?? "Request failed",
+        details: apiError.details ?? {},
+      });
+    }
+
+    throw createHttpError({
+      status: response.status,
+      code: "HTTP_ERROR",
+      message: response.statusText || "Request failed",
+      details: { payload },
+    });
+  }
+
+  try {
+    return (await response.json()) as TData;
+  } catch (error) {
+    throw createHttpError({
+      status: 500,
+      code: "INVALID_RESPONSE",
+      message: "Failed to parse server response",
+      details: { cause: error },
+    });
+  }
+}

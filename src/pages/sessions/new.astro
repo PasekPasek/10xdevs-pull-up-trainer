@@ -1,0 +1,10 @@
+---
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout.astro";
+import { SessionFormWrapper } from "@/components/sessions/SessionFormWrapper";
+---
+
+<AuthenticatedLayout title="Create Session - Pull-Up Trainer">
+  <div class="container mx-auto py-8 px-4">
+    <SessionFormWrapper client:load />
+  </div>
+</AuthenticatedLayout>
