@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import {
   type RegisterFormValues,
   calculatePasswordStrength,
 } from "@/lib/validation/ui/registerForm.schema";
-import { supabaseClient } from "@/db/supabase.client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [passwordStrength, setPasswordStrength] = useState<{
     strength: "weak" | "medium" | "strong";
     percentage: number;
@@ -46,75 +45,69 @@ function RegisterForm() {
   }, [password]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data } = await supabaseClient.auth.getUser();
-        if (data.user) {
-          window.location.href = "/dashboard";
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    };
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
 
-    checkAuth();
+    if (redirect) {
+      setRedirectPath(redirect);
+    }
   }, []);
 
-  const onSubmit = async (values: RegisterFormValues) => {
-    setIsLoading(true);
+  const onSubmit = useCallback(
+    async (values: RegisterFormValues) => {
+      setIsLoading(true);
 
-    try {
-      const { data, error } = await supabaseClient.auth.signUp({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) {
-        if (error.message.includes("already registered") || error.message.includes("already exists")) {
-          toast.error("An account with this email already exists");
-        } else {
-          toast.error("Failed to create account. Please try again.");
-        }
-        return;
-      }
-
-      if (data.user) {
-        // Auto-login after successful registration
-        const { error: signInError } = await supabaseClient.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
         });
 
-        if (signInError) {
-          toast.error("Account created, but failed to sign in. Please try signing in manually.");
-          window.location.href = "/login";
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => undefined);
+
+          if (response.status === 409) {
+            toast.error(errorBody?.error?.message ?? "An account with this email already exists");
+            form.setError("email", {
+              message: "An account with this email already exists",
+            });
+            return;
+          }
+
+          if (response.status === 400 && errorBody?.error?.details) {
+            const details = errorBody.error.details as Record<string, string[]>;
+            Object.entries(details).forEach(([field, messages]) => {
+              const message = messages?.[0];
+              if (!message) {
+                return;
+              }
+
+              if (field in form.formState.errors === false) {
+                form.setError(field as keyof RegisterFormValues, { message });
+              }
+            });
+            toast.error(errorBody.error.message ?? "Invalid input data");
+            return;
+          }
+
+          toast.error(errorBody?.error?.message ?? "Failed to create account. Please try again.");
           return;
         }
 
         toast.success("Account created successfully!");
-        window.location.href = "/dashboard";
+        window.location.href = redirectPath;
+      } catch (error) {
+        console.error("Registration error:", error);
+        toast.error("An error occurred during registration. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast.error("An error occurred during registration. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isCheckingAuth) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="pt-6">
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    },
+    [form, redirectPath]
+  );
 
   const isDisabled = isLoading;
 
@@ -137,7 +130,7 @@ function RegisterForm() {
         <CardDescription>Sign up to start tracking your pull-up progress</CardDescription>
       </CardHeader>
 
-      <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

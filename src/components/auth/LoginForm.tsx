@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { loginFormSchema, type LoginFormValues } from "@/lib/validation/ui/loginForm.schema";
-import { supabaseClient } from "@/db/supabase.client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,7 @@ import { PasswordField } from "./PasswordField";
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   const form = useForm({
     resolver: zodResolver(loginFormSchema),
@@ -26,58 +25,44 @@ function LoginForm() {
   });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data } = await supabaseClient.auth.getUser();
-        if (data.user) {
-          window.location.href = "/dashboard";
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    };
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
 
-    checkAuth();
+    if (redirect) {
+      setRedirectPath(redirect);
+    }
   }, []);
 
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
+  const onSubmit = useCallback(
+    async (values: LoginFormValues) => {
+      setIsLoading(true);
 
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
 
-      if (error) {
-        toast.error("Invalid email or password");
-        return;
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => undefined);
+          const message = errorBody?.error?.message ?? "Invalid email or password";
+          toast.error(message);
+          return;
+        }
+
+        window.location.href = redirectPath;
+      } catch (error) {
+        console.error("Login error:", error);
+        toast.error("An error occurred during login. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
-
-      if (data.user) {
-        window.location.href = "/dashboard";
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isCheckingAuth) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="pt-6">
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    },
+    [redirectPath]
+  );
 
   const isDisabled = isLoading;
 
@@ -88,7 +73,7 @@ function LoginForm() {
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
 
-      <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
