@@ -10,6 +10,8 @@ Pull-Up Training Tracker MVP
 
 The Pull-Up Training Tracker is a mobile-responsive web application designed to help advanced users (capable of 15-20 pull-ups) systematically track their pull-up training progress and receive AI-powered training session recommendations. The application provides structure, accountability, and intelligent progression planning for consistent pull-up training improvement.
 
+**IMPORTANT: This is an authenticated-only application. All users must register and log in to access any functionality. There is no guest or unauthenticated access to the application features.**
+
 ### 1.3 Target Audience
 
 Advanced fitness enthusiasts and athletes who:
@@ -55,6 +57,8 @@ A specialized web application that combines simple training logging with AI-powe
 
 ### 3.1 Authentication and User Management
 
+**AUTHENTICATION REQUIREMENT**: All application features require user authentication. Users must register and log in before accessing any functionality. The following routes are public: `/` (landing page with login/register CTAs), `/login`, and `/register`. All other routes require authentication and will redirect unauthenticated users to `/login`.
+
 #### 3.1.1 User Registration
 
 - Email and password-based registration system
@@ -62,13 +66,15 @@ A specialized web application that combines simple training logging with AI-powe
 - Password strength indicator during registration
 - Email validation
 - Optional social login (Google, Apple) using proven libraries for future iterations
+- Successful registration automatically logs the user in and redirects to `/dashboard`
 
 #### 3.1.2 User Login
 
 - Email and password authentication
-- Session management with secure tokens
-- "Remember me" functionality
+- Session management with secure tokens (Supabase JWT)
+- "Remember me" functionality (enabled by default)
 - Logout functionality
+- Already-authenticated users accessing `/login` or `/register` are redirected to `/dashboard`
 
 #### 3.1.3 Password Management
 
@@ -276,14 +282,7 @@ A specialized web application that combines simple training logging with AI-powe
 
 #### 3.7.2 Account Deletion
 
-- Account deletion option in settings
-- Confirmation dialog: "Permanently delete account? All your training data will be lost."
-- Clear Cancel/Confirm buttons
-- Immediate permanent deletion of all user data:
-  - User profile
-  - All training sessions
-  - Authentication credentials
-  - No grace period or recovery option
+// Deferred to Post-MVP
 
 ### 3.8 Validation and Error Handling
 
@@ -424,7 +423,7 @@ A specialized web application that combines simple training logging with AI-powe
 - Session state management (planned, in progress, completed, failed)
 - Rest period warnings
 - Data export functionality
-- Account deletion
+- Account deletion (Post-MVP)
 - Mobile-responsive design
 - Basic admin dashboard
 
@@ -559,20 +558,10 @@ Acceptance Criteria:
 #### US-007: Delete Account
 
 ID: US-007
-Title: Permanently Delete Account
-Description: As a user, I want to delete my account and all associated data so that I can remove my information from the system.
-Acceptance Criteria:
-
-- Account deletion option is available in settings
-- Confirmation dialog clearly warns: "Permanently delete account? All your training data will be lost."
-- User must confirm action explicitly
-- All user data is immediately and permanently deleted:
-  - User profile
-  - All training sessions
-  - Authentication credentials
-- User is logged out and redirected to home page
-- No grace period or recovery option
-- Success message confirms deletion
+Title: Permanently Delete Account (Post-MVP)
+Description: [Deferred] As a user, I want to delete my account and all associated data so that I can remove my information from the system.
+ Acceptance Criteria:
+// Deferred to Post-MVP
 
 ### 5.2 Session Creation and Management
 
