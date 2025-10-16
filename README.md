@@ -51,6 +51,14 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
   - Financial limits and cost control
   - Model flexibility for optimal performance and cost efficiency
 
+### Testing
+
+- **[Vitest](https://vitest.dev/)** - Unit and integration testing
+- **[Testing Library](https://testing-library.com/docs/react-testing-library/intro/)** - React component testing
+- **[MSW](https://mswjs.io/)** / **[Nock](https://github.com/nock/nock)** - HTTP request mocking for tests
+- **[Playwright](https://playwright.dev/)** - End-to-end testing (Chromium/Firefox + mobile WebKit)
+- **[axe-core](https://www.deque.com/axe/core-documentation/)** - Accessibility testing integration
+
 ### DevOps
 
 - **GitHub Actions** - CI/CD pipeline automation
