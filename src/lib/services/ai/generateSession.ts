@@ -491,3 +491,18 @@ function computeDurationMs(startedAt: number): number {
   const elapsed = Date.now() - startedAt;
   return elapsed < 0 ? 0 : elapsed;
 }
+
+/**
+ * @internal
+ * Exposes deterministic helpers for unit testing. Not part of public API.
+ */
+export const __test = {
+  clampRepValue,
+  buildPromptMetadata,
+  sanitizeHistoricalSetValue,
+  sanitizeSessionSets,
+  deriveTotalReps,
+  ensureIso,
+  computeDurationMs,
+  normalizeResponse,
+};

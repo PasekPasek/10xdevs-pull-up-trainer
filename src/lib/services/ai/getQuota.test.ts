@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "../../../db/database.types";
-import { getQuota } from "./getQuota";
+import { __test as quotaHelpers, getQuota } from "./getQuota";
 
 describe("getQuota", () => {
   let mockSupabase: SupabaseClient<Database>;
@@ -108,5 +108,10 @@ describe("getQuota", () => {
     expect(result.limit).toBe(5);
     expect(result.nextWindowSeconds).toBeLessThan(24 * 3600);
     expect(result.nextWindowSeconds).toBeGreaterThan(0);
+  });
+
+  it("exposes quota constants for deterministic testing", () => {
+    expect(quotaHelpers.AI_GENERATION_LIMIT).toBeGreaterThan(0);
+    expect(quotaHelpers.AI_WINDOW_HOURS).toBe(24);
   });
 });

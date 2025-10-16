@@ -78,3 +78,11 @@ export async function getQuota(dependencies: GetQuotaDependencies, userId: strin
     nextWindowSeconds,
   };
 }
+
+/**
+ * @internal Exposed for unit testing to allow deterministic window calculations.
+ */
+export const __test = {
+  AI_GENERATION_LIMIT,
+  AI_WINDOW_HOURS,
+};

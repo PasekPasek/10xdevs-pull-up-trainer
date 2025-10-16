@@ -642,6 +642,19 @@ export function mapOpenRouterErrorToHttpStatus(error: OpenRouterError): number {
   }
 }
 
+/**
+ * @internal
+ * Expose validation primitives for deterministic unit tests.
+ */
+export const __test = {
+  DEFAULT_TIMEOUT_MS,
+  MAX_COMMENT_LENGTH,
+  MIN_COMMENT_LENGTH,
+  SETS_REQUIRED,
+  MIN_REPS,
+  MAX_REPS,
+};
+
 export function createOpenRouterService(
   overrides: Partial<Omit<OpenRouterServiceDependencies, "apiKey">> = {}
 ): OpenRouterService {
