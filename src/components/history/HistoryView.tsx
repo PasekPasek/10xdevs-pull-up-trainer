@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useListSessions } from "@/lib/services/sessions/hooks";
 import type { SessionStatus, SessionSortOption } from "@/types";
 import { FiltersPanel } from "./FiltersPanel";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 const STORAGE_KEY = "history-filters";
 const PAGE_SIZE = 10;
@@ -75,7 +77,7 @@ function loadFiltersFromStorage(): HistoryFilters {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error("Failed to load filters from storage:", error);
+    globalThis.reportError?.(error);
   }
   return { sort: "sessionDate_desc" };
 }
@@ -84,7 +86,7 @@ function saveFiltersToStorage(filters: HistoryFilters) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
   } catch (error) {
-    console.error("Failed to save filters to storage:", error);
+    globalThis.reportError?.(error);
   }
 }
 
@@ -93,7 +95,7 @@ function validateDateRange(dateFrom?: string, dateTo?: string): boolean {
   return new Date(dateFrom) <= new Date(dateTo);
 }
 
-export default function HistoryView() {
+function HistoryViewInner() {
   const [mounted, setMounted] = useState(false);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<HistoryFilters>({ sort: "sessionDate_desc" });
@@ -242,6 +244,25 @@ export default function HistoryView() {
           )}
         </main>
       </div>
+      <Toaster />
     </div>
+  );
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 1000 * 5,
+    },
+  },
+});
+
+export default function HistoryView() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HistoryViewInner />
+    </QueryClientProvider>
   );
 }

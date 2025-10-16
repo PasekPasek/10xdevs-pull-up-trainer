@@ -33,33 +33,20 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
     // Parse query params
     const url = new URL(context.request.url);
-    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const queryParams: Record<string, string | string[]> = Object.fromEntries(url.searchParams.entries());
 
     // Handle multiple eventType values
     const eventTypeParams = url.searchParams.getAll("eventType");
@@ -79,7 +66,7 @@ export const GET: APIRoute = async (context) => {
     }
 
     // List events
-    const { events, pagination } = await listEvents({ supabase }, userResult.user.id, queryResult.data);
+    const { events, pagination } = await listEvents({ supabase }, user.id, queryResult.data);
 
     const body = JSON.stringify({
       data: {

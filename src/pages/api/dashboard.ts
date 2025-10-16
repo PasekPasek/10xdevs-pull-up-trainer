@@ -10,6 +10,7 @@ export const GET: APIRoute = async (context) => {
 
   try {
     const supabase = context.locals.supabase;
+    const user = context.locals.user;
 
     if (!supabase) {
       throw createHttpError({
@@ -20,32 +21,17 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
-
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
     // Get dashboard snapshot
-    const dashboard = await getDashboard({ supabase }, userResult.user.id);
+    const dashboard = await getDashboard({ supabase }, user.id);
 
     const body = JSON.stringify({
       data: dashboard,

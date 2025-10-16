@@ -7,7 +7,8 @@ import type { Database } from "./db/database.types";
 declare global {
   namespace App {
     interface Locals {
-      supabase: SupabaseClient<Database>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      supabase: SupabaseClient<Database, "public", any>;
       user?: import("@supabase/supabase-js").User;
     }
   }

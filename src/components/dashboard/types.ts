@@ -1,6 +1,8 @@
 import type { AiQuotaDTO } from "@/types";
 
-export type AiWizardStep = "quota" | "input" | "loading" | "result" | "error" | "confirmDelete" | "confirmFail";
+export type { AiQuotaDTO };
+
+export type AiWizardStep = "input" | "loading" | "result" | "error" | "confirmDelete" | "confirmFail" | "quota";
 
 export interface AiWizardState {
   step: AiWizardStep;

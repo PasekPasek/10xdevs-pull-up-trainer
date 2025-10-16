@@ -1,7 +1,8 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "../../../db/database.types";
+import type { Database, Json } from "../../../db/database.types";
 import type { SessionInsert, SessionRow, SessionSets, SessionStatus } from "../../../types";
+import { computeTotal, normalizeSets } from "@/lib/utils/session";
 import { createHttpError } from "../../utils/httpError";
 import type { WarningPayload } from "./mappers";
 import type { CreateSessionInput } from "../../validation/sessions/createSession.schema";
@@ -188,7 +189,7 @@ async function insertEvent(
   supabase: SupabaseClient<Database>,
   userId: string,
   eventType: string,
-  eventData: Record<string, unknown>
+  eventData: Json
 ): Promise<void> {
   const { error } = await supabase.from("events").insert({
     user_id: userId,
@@ -248,16 +249,18 @@ export async function createSession(
   const warnings = buildWarnings(restInfo);
 
   const initialStatus: SessionStatus = command.startNow ? "planned" : command.status;
+  const normalizedSets = normalizeSets(command.sets);
+
   const insertPayload: SessionInsert = {
     user_id: userId,
     status: initialStatus,
     session_date: command.sessionDate,
     rpe: command.status === "completed" ? (command.rpe ?? null) : null,
-    total_reps: command.sets.reduce((sum, value) => sum + (value ?? 0), 0),
+    total_reps: computeTotal(normalizedSets),
     is_ai_generated: false,
     is_modified: false,
     ai_comment: null,
-    ...mapSetsToInsert(command.sets),
+    ...mapSetsToInsert(normalizedSets),
   };
 
   const session = await insertSession(supabase, userId, insertPayload);
@@ -266,8 +269,8 @@ export async function createSession(
     sessionId: session.id,
     notes: command.notes ?? null,
     status: command.status,
-    warnings,
-    restInfo,
+    warnings: warnings as unknown as Json,
+    restInfo: restInfo as unknown as Json,
   });
 
   if (command.startNow) {
@@ -290,8 +293,8 @@ export async function createSession(
 
     await insertEvent(supabase, userId, "session_started", {
       sessionId: data.id,
-      warnings,
-      restInfo,
+      warnings: warnings as unknown as Json,
+      restInfo: restInfo as unknown as Json,
     });
 
     return { session: data, warnings };

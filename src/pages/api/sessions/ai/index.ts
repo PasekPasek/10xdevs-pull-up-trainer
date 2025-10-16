@@ -29,27 +29,14 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -83,14 +70,14 @@ export const POST: APIRoute = async (context) => {
     // Generate AI session (with MOCK LLM)
     const { session, generation } = await generateAiSession(
       { supabase },
-      userResult.user.id,
+      user.id,
       maxPullups,
       model,
       startNow
     );
 
     // Get updated quota
-    const quota = await getQuota({ supabase }, userResult.user.id);
+    const quota = await getQuota({ supabase }, user.id);
 
     // Map to DTOs
     const sessionDto = mapSessionRowToDTO(session);

@@ -10,10 +10,10 @@ import {
   type CreateManualSessionFormValues,
 } from "@/lib/validation/ui/createManualSessionForm.schema";
 import { useCreateSession, useSessionValidation } from "@/lib/services/sessions/hooks";
-import { localDateTimeToUtcIso, getMaxFutureDate, isPast, isTodayOrFuture } from "@/lib/utils/date";
+import { localDateToUtcIso, getMaxFutureDate, isPast, isTodayOrFuture } from "@/lib/utils/date";
 import { computeTotal, normalizeSets } from "@/lib/utils/session";
 import { isHttpError } from "@/lib/utils/httpError";
-import type { CreateSessionCommand, SessionStatus } from "@/types";
+import type { CreateSessionCommand } from "@/types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +77,7 @@ export function SessionForm() {
   const dateIsPast = useMemo(() => {
     if (!sessionDateLocal) return false;
     try {
-      return isPast(localDateTimeToUtcIso(sessionDateLocal));
+      return isPast(localDateToUtcIso(sessionDateLocal));
     } catch {
       return false;
     }
@@ -86,7 +86,7 @@ export function SessionForm() {
   const dateIsTodayOrFuture = useMemo(() => {
     if (!sessionDateLocal) return false;
     try {
-      return isTodayOrFuture(localDateTimeToUtcIso(sessionDateLocal));
+      return isTodayOrFuture(localDateToUtcIso(sessionDateLocal));
     } catch {
       return false;
     }
@@ -112,18 +112,14 @@ export function SessionForm() {
   const validationDateUtc = useMemo(() => {
     if (!debouncedDateLocal) return "";
     try {
-      return localDateTimeToUtcIso(debouncedDateLocal);
+      return localDateToUtcIso(debouncedDateLocal);
     } catch {
       return "";
     }
   }, [debouncedDateLocal]);
 
   // Preflight validation query
-  const {
-    data: validationData,
-    isLoading: isValidating,
-    error: validationError,
-  } = useSessionValidation(
+  const { data: validationData, isLoading: isValidating } = useSessionValidation(
     {
       sessionDate: validationDateUtc,
       status: debouncedStatus,
@@ -138,12 +134,12 @@ export function SessionForm() {
   const isBlocking = validationData?.blocking ?? false;
   const warnings = validationData?.warnings ?? [];
 
-  // Create session mutation
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
   const createSessionMutation = useCreateSession({
-    onSuccess: (response) => {
+    onSuccess: () => {
       toast.success("Session created successfully!");
-      // Navigate to dashboard
-      window.location.href = "/dashboard";
+      setShouldRedirect(true);
     },
     onError: (error: unknown) => {
       setIsSubmitting(false);
@@ -162,6 +158,18 @@ export function SessionForm() {
     },
   });
 
+  useEffect(() => {
+    if (!shouldRedirect) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [shouldRedirect]);
+
   // Handle form submission
   const onSubmit = async (formValues: CreateManualSessionFormValues) => {
     // Prevent submission if blocking
@@ -174,8 +182,10 @@ export function SessionForm() {
 
     try {
       // Convert form values to API command
+      const sessionDate = localDateToUtcIso(formValues.sessionDateLocal);
+
       const command: CreateSessionCommand = {
-        sessionDate: localDateTimeToUtcIso(formValues.sessionDateLocal),
+        sessionDate,
         status: formValues.status,
         sets: normalizeSets(formValues.sets),
         rpe: formValues.rpe ?? undefined,
@@ -185,8 +195,7 @@ export function SessionForm() {
 
       await createSessionMutation.mutateAsync(command);
     } catch (error) {
-      // Error handling done in mutation callbacks
-      console.error("Session creation error:", error);
+      globalThis.reportError?.(error);
     }
   };
 
@@ -251,15 +260,15 @@ export function SessionForm() {
         {/* Non-blocking Warnings */}
         {!isBlocking && warnings.length > 0 && <InlineAlert warnings={warnings} />}
 
-        {/* Date/Time Field */}
+        {/* Date Field */}
         <div className="space-y-2">
           <Label htmlFor="sessionDateLocal" className="flex items-center gap-2">
             <Calendar className="size-4" />
-            Session Date & Time
+            Session Date
           </Label>
           <Input
             id="sessionDateLocal"
-            type="datetime-local"
+            type="date"
             max={getMaxFutureDate()}
             {...register("sessionDateLocal")}
             aria-invalid={!!errors.sessionDateLocal}
@@ -270,6 +279,11 @@ export function SessionForm() {
               {errors.sessionDateLocal.message}
             </p>
           )}
+          <p className="text-xs text-muted-foreground">
+            {dateIsTodayOrFuture
+              ? "Creating a planned session for today or future"
+              : "Creating a historical session (completed/failed)"}
+          </p>
         </div>
 
         {/* Status Selector (past only) */}

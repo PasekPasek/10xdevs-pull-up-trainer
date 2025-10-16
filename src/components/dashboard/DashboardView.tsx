@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useDashboardSnapshot, useInvalidateDashboard } from "@/lib/services/dashboard/hooks";
+import { normalizeSets } from "@/lib/utils/session";
 import {
   useCompleteSessionMutation,
   useDeleteSessionMutation,
@@ -22,14 +24,15 @@ import { EditSessionDialog, type EditSessionFormValues } from "@/components/dash
 import { ETagConflictDialog } from "@/components/dashboard/ETagConflictDialog";
 import { AIWizardModal } from "@/components/dashboard/AIWizardModal";
 import { useDashboardContext } from "@/components/dashboard/DashboardContext";
+import { hasNoQuota } from "@/components/dashboard/types";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import type { SessionDetailDTO } from "@/types";
 
-export default function DashboardView() {
+function DashboardViewInner() {
   const invalidate = useInvalidateDashboard();
   const snapshotQuery = useDashboardSnapshot();
-  const { openWizard, setWizardState } = useDashboardContext();
+  const { setWizardState, closeWizard } = useDashboardContext();
 
   const [completeDialog, setCompleteDialog] = useState<{ open: boolean; session?: SessionDetailDTO }>({ open: false });
   const [failDialog, setFailDialog] = useState<{ open: boolean; session?: SessionDetailDTO }>({ open: false });
@@ -126,15 +129,49 @@ export default function DashboardView() {
   };
 
   const handleCreateAi = () => {
-    if (!snapshot?.aiQuota) return;
-    setWizardState((prev) => ({ ...prev, quota: snapshot.aiQuota, step: "input" }));
-    openWizard();
+    if (!snapshot?.aiQuota) {
+      setWizardState({ quota: undefined, step: "quota" });
+      return;
+    }
+
+    // Check if user has no quota
+    if (hasNoQuota(snapshot.aiQuota)) {
+      setWizardState({
+        quota: snapshot.aiQuota,
+        step: "quota",
+      });
+      return;
+    }
+
+    // Check if user has existing sessions (not a new user)
+    const hasExistingSessions = !!snapshot.lastCompletedSession;
+
+    if (hasExistingSessions) {
+      // Existing user: skip input, go straight to loading/generation
+      setWizardState({
+        quota: snapshot.aiQuota,
+        step: "loading",
+        maxPullups: undefined, // Don't set maxPullups for existing users
+      });
+    } else {
+      // New user: show input form to collect maxPullups
+      setWizardState({
+        quota: snapshot.aiQuota,
+        step: "input",
+      });
+    }
   };
 
-  const handleCompleteSubmit = (values: { sets: (number | null)[]; rpe?: number }) => {
+  const handleCompleteSubmit = (values: { sets: (number | null)[]; rpe?: number | null }) => {
     const sessionId = completeDialog.session?.id;
     if (!sessionId) return;
-    completeMutation.mutate({ sessionId, command: { sets: values.sets as number[], rpe: values.rpe } });
+    completeMutation.mutate({
+      sessionId,
+      command: {
+        sets: normalizeSets(values.sets),
+        rpe: values.rpe ?? undefined,
+      },
+    });
     setCompleteDialog({ open: false });
   };
 
@@ -159,7 +196,7 @@ export default function DashboardView() {
       sessionId: current.id,
       command: {
         sessionDate: values.sessionDate,
-        sets: values.sets,
+        sets: normalizeSets(values.sets),
         aiComment: values.aiComment ?? undefined,
       },
       etag: editDialog.etag,
@@ -168,7 +205,7 @@ export default function DashboardView() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <section className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-8 md:px-0">
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -280,9 +317,38 @@ export default function DashboardView() {
         onSuccess={() => {
           toast.success("AI session created");
           invalidate();
-          openWizard();
+          closeWizard();
         }}
       />
+    </>
+  );
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 1000 * 5, // 5 seconds
+    },
+  },
+});
+
+function DashboardViewWithProviders() {
+  const snapshotQuery = useDashboardSnapshot();
+  const snapshot = snapshotQuery.data;
+
+  return (
+    <DashboardLayout quota={snapshot?.aiQuota}>
+      <DashboardViewInner />
     </DashboardLayout>
+  );
+}
+
+export default function DashboardView() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DashboardViewWithProviders />
+    </QueryClientProvider>
   );
 }

@@ -8,7 +8,10 @@ import type { SessionSets } from "@/types";
  * Calculate total reps from sets
  */
 export function computeTotal(sets: (number | null)[]): number {
-  return sets.reduce((sum, v) => sum + (v ?? 0), 0);
+  return sets.reduce<number>((sum, value) => {
+    const safeValue = typeof value === "number" ? value : 0;
+    return sum + safeValue;
+  }, 0);
 }
 
 /**

@@ -1,38 +1,48 @@
-import { Button } from "@/components/ui/button";
-import { supabaseClient } from "@/db/supabase.client";
+import { useCallback, useState } from "react";
 import { Dumbbell, LayoutDashboard, History, ShieldCheck, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+
+interface HeaderNavUser {
+  email: string | null;
+  isAdmin: boolean;
+}
 
 interface HeaderNavProps {
   currentPath: string;
+  user: HeaderNavUser | null;
 }
 
-export function HeaderNav({ currentPath }: HeaderNavProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+export function HeaderNav({ currentPath, user }: HeaderNavProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    supabaseClient.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser(data.user);
-        setIsAdmin(data.user.app_metadata?.role === "admin");
-      }
-    });
-  }, []);
-
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     setIsLoading(true);
+
     try {
-      await supabaseClient.auth.signOut();
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => undefined);
+        const message = errorBody?.error?.message ?? "Failed to sign out. Please try again.";
+        toast.error(message);
+        setIsLoading(false);
+        return;
+      }
+
       window.location.href = "/login";
     } catch (error) {
+      globalThis.reportError?.(error);
       toast.error("Failed to sign out. Please try again.");
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const navItems = [
     {
@@ -51,7 +61,7 @@ export function HeaderNav({ currentPath }: HeaderNavProps) {
       href: "/admin",
       label: "Admin",
       icon: <ShieldCheck className="h-4 w-4" aria-hidden="true" />,
-      show: isAdmin,
+      show: user?.isAdmin ?? false,
     },
   ];
 
@@ -87,11 +97,13 @@ export function HeaderNav({ currentPath }: HeaderNavProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          {user && <div className="hidden sm:block text-sm text-muted-foreground">{user.email}</div>}
-          <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={isLoading} className="gap-2">
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            <span>Sign Out</span>
-          </Button>
+          {user?.email && <div className="hidden sm:block text-sm text-muted-foreground">{user.email}</div>}
+          {user ? (
+            <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={isLoading} className="gap-2">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span>{isLoading ? "Signing out..." : "Sign Out"}</span>
+            </Button>
+          ) : null}
         </div>
       </div>
 

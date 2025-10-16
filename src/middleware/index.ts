@@ -5,42 +5,92 @@ import { createSupabaseServerInstance } from "../db/supabase.server";
 const PUBLIC_ROUTES = new Set(["/", "/login", "/register"]);
 const PUBLIC_API_ROUTES = new Set(["/api/auth/login", "/api/auth/register", "/api/auth/logout"]);
 const ADMIN_ROUTES = ["/admin"];
+const STATIC_FILE_REGEX = /\.[^/]+$/;
+
+function buildLoginRedirect(url: URL) {
+  const target = `${url.pathname}${url.search}`;
+
+  if (!target || target === "/login" || target === "/register") {
+    return "/login";
+  }
+
+  const loginUrl = new URL("/login", url);
+  loginUrl.searchParams.set("redirect", target);
+
+  return `${loginUrl.pathname}${loginUrl.search}`;
+}
+
+function buildJsonError(status: number, code: string, message: string) {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code,
+        message,
+      },
+    }),
+    {
+      status,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
+    }
+  );
+}
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const supabase = createSupabaseServerInstance({ headers: context.request.headers, cookies: context.cookies });
+  const { request, cookies, url } = context;
+  const pathname = url.pathname;
 
+  if (STATIC_FILE_REGEX.test(pathname)) {
+    return next();
+  }
+
+  const supabase = createSupabaseServerInstance({ headers: request.headers, cookies });
   context.locals.supabase = supabase;
-  const pathname = context.url.pathname;
 
   if (PUBLIC_API_ROUTES.has(pathname)) {
     return next();
   }
 
   const {
-    data: { session, user },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (PUBLIC_ROUTES.has(pathname)) {
-    if (user && (pathname === "/login" || pathname === "/register")) {
+  if (!error) {
+    context.locals.user = user ?? undefined;
+  }
+
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  const isApiRoute = pathname.startsWith("/api/");
+
+  if (isPublicRoute) {
+    if (user && pathname !== "/dashboard") {
       return context.redirect("/dashboard");
     }
 
     return next();
   }
 
-  if (!user || !session) {
-    const redirectTarget = pathname === "/login" ? "/dashboard" : `/login?redirect=${encodeURIComponent(pathname)}`;
-    return context.redirect(redirectTarget);
+  if (!user) {
+    if (isApiRoute) {
+      return buildJsonError(401, "UNAUTHORIZED", "Authentication required");
+    }
+
+    return context.redirect(buildLoginRedirect(url));
   }
 
   const requiresAdmin = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   const isAdmin = user.app_metadata?.role === "admin";
 
   if (requiresAdmin && !isAdmin) {
+    if (isApiRoute) {
+      return buildJsonError(403, "FORBIDDEN", "Insufficient permissions");
+    }
+
     return context.redirect("/dashboard");
   }
-
-  context.locals.user = user;
 
   return next();
 });

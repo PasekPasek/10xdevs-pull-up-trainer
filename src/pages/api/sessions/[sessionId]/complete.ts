@@ -4,6 +4,7 @@ import { z } from "zod";
 import { buildErrorResponse, createHttpError } from "../../../../lib/utils/httpError";
 import { completeSession } from "../../../../lib/services/sessions/completeSession";
 import { mapSessionRowToDTO } from "../../../../lib/services/sessions/mappers";
+import { normalizeSets } from "../../../../lib/utils/session";
 
 export const prerender = false;
 
@@ -31,27 +32,14 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -80,7 +68,11 @@ export const POST: APIRoute = async (context) => {
 
     const { sessionId } = paramsResult.data;
 
-    const session = await completeSession({ supabase }, userResult.user.id, sessionId, bodyResult.data);
+    const command = {
+      sets: bodyResult.data.sets ? normalizeSets(bodyResult.data.sets) : undefined,
+      rpe: bodyResult.data.rpe !== null && bodyResult.data.rpe !== undefined ? bodyResult.data.rpe : undefined,
+    };
+    const session = await completeSession({ supabase }, user.id, sessionId, command);
 
     const sessionDto = mapSessionRowToDTO(session);
 

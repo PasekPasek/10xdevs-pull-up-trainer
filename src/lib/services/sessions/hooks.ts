@@ -35,7 +35,7 @@ interface CompleteSessionParams {
 }
 
 interface GenerateAiSessionParams {
-  maxPullups: number;
+  maxPullups?: number;
   startNow?: boolean;
 }
 
@@ -46,7 +46,7 @@ interface RetryAiGenerationParams {
 interface UpdateSessionPayload {
   sessionDate?: SessionDetailDTO["sessionDate"];
   sets?: SessionDetailDTO["sets"];
-  notes?: SessionDetailDTO["notes"];
+  notes?: string | null;
   aiComment?: SessionDetailDTO["aiComment"];
   markAsModified?: boolean;
 }
@@ -187,13 +187,17 @@ export function useGenerateAiSessionMutation(options?: {
 }) {
   return useMutation({
     mutationFn: async ({ maxPullups, startNow }: GenerateAiSessionParams) => {
+      const body: { maxPullups?: number; startNow?: boolean } = {};
+      if (maxPullups !== undefined) body.maxPullups = maxPullups;
+      if (startNow !== undefined) body.startNow = startNow;
+
       const response = await createApiRequest<GenerateAiSessionResponse>("/api/sessions/ai", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ maxPullups, startNow }),
+        body: JSON.stringify(body),
       });
 
       return {

@@ -1,4 +1,5 @@
 # Specyfikacja Techniczna Systemu Autentykacji
+
 ## Pull-Up Training Tracker MVP
 
 ---
@@ -6,14 +7,15 @@
 ## UWAGA: Zakres MVP
 
 **W ZAKRESIE MVP:**
+
 - ✅ Rejestracja użytkownika (email + hasło)
 - ✅ Logowanie użytkownika (email + hasło + "Remember me")
 - ✅ Wylogowanie użytkownika
 - ✅ Ochrona tras (middleware)
 - ✅ Zarządzanie sesjami (cookies)
 
-
 **POZA ZAKRESEM MVP (Future Considerations):**
+
 - ❌ Forgot Password / Reset Password
 - ❌ Password Change w ustawieniach
 - ❌ Email Verification
@@ -30,6 +32,7 @@
 #### 1.1.1 Strony Publiczne (Bez Autentykacji)
 
 ##### A. Strona Główna `/`
+
 - **Plik**: `src/pages/index.astro`
 - **Layout**: `src/layouts/Layout.astro` (podstawowy, bez nawigacji zalogowanego użytkownika)
 - **Status**: ✅ Zaimplementowana
@@ -42,6 +45,7 @@
   - Opcjonalnie: dodać server-side redirect w Astro zamiast client-side sprawdzania
 
 ##### B. Strona Logowania `/login`
+
 - **Plik**: `src/pages/login.astro`
 - **Layout**: `src/layouts/Layout.astro` (podstawowy)
 - **Komponenty React**: `LoginForm` (client:load)
@@ -57,6 +61,7 @@
   - Zmienić logikę logowania na wywołanie API endpoint zamiast bezpośredniego użycia Supabase
 
 ##### C. Strona Rejestracji `/register`
+
 - **Plik**: `src/pages/register.astro`
 - **Layout**: `src/layouts/Layout.astro` (podstawowy)
 - **Komponenty React**: `RegisterForm` (client:load)
@@ -74,6 +79,7 @@
 #### 1.1.2 Strony Chronione (Wymagają Autentykacji)
 
 ##### A. Dashboard `/dashboard`
+
 - **Plik**: `src/pages/dashboard.astro`
 - **Layout**: `src/layouts/AuthenticatedLayout.astro`
 - **Status**: ✅ Zaimplementowana
@@ -82,18 +88,21 @@
   - Middleware musi weryfikować sesję i przekierowywać do `/login` jeśli brak autentykacji
 
 ##### B. Historia `/history`
+
 - **Plik**: `src/pages/history.astro`
 - **Layout**: `src/layouts/AuthenticatedLayout.astro`
 - **Status**: ✅ Zaimplementowana
 - **Ochrona**: Wymaga middleware auth check
 
 ##### C. Sesje `/sessions/*`
+
 - **Pliki**: `src/pages/sessions/*.astro`
 - **Layout**: `src/layouts/AuthenticatedLayout.astro`
 - **Status**: ✅ Zaimplementowane
 - **Ochrona**: Wymaga middleware auth check
 
 ##### D. Admin `/admin`
+
 - **Plik**: `src/pages/admin.astro`
 - **Layout**: `src/layouts/AuthenticatedLayout.astro`
 - **Status**: ✅ Zaimplementowana
@@ -104,6 +113,7 @@
 #### 1.2.1 Istniejące Komponenty Auth (Do Modyfikacji)
 
 ##### A. LoginForm
+
 - **Plik**: `src/components/auth/LoginForm.tsx`
 - **Status**: ✅ Zaimplementowany, wymaga modyfikacji
 - **Obecna implementacja**:
@@ -113,6 +123,7 @@
   - Client-side sprawdzanie autentykacji w `useEffect`
   - Checkbox "Remember me" (domyślnie zaznaczony)
 - **Wymagane modyfikacje**:
+
   ```typescript
   // PRZED (obecnie):
   const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -121,16 +132,17 @@
   });
 
   // PO (docelowo):
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: values.email,
       password: values.password,
-      rememberMe: values.rememberMe
-    })
+      rememberMe: values.rememberMe,
+    }),
   });
   ```
+
 - **Struktura komponentu**:
   - Pola: email (autofocus), password (z PasswordField), rememberMe
   - Loading state podczas logowania (disable form + spinner na przycisku)
@@ -139,6 +151,7 @@
   - Link do rejestracji w CardFooter
 
 ##### B. RegisterForm
+
 - **Plik**: `src/components/auth/RegisterForm.tsx`
 - **Status**: ✅ Zaimplementowany, wymaga modyfikacji
 - **Obecna implementacja**:
@@ -149,6 +162,7 @@
   - Password strength indicator (Progress bar + tekst)
   - Client-side sprawdzanie autentykacji w `useEffect`
 - **Wymagane modyfikacje**:
+
   ```typescript
   // PRZED (obecnie):
   const { data, error } = await supabaseClient.auth.signUp({
@@ -158,17 +172,18 @@
   // następnie auto-login...
 
   // PO (docelowo):
-  const response = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: values.email,
       password: values.password,
-      rememberMe: values.rememberMe
-    })
+      rememberMe: values.rememberMe,
+    }),
   });
   // Backend wykona rejestrację + auto-login
   ```
+
 - **Struktura komponentu**:
   - Pola: email (autofocus), password (z PasswordField + strength indicator), rememberMe
   - Password requirements list (widoczny stale)
@@ -177,6 +192,7 @@
   - Link do logowania w CardFooter
 
 ##### C. PasswordField
+
 - **Plik**: `src/components/auth/PasswordField.tsx`
 - **Status**: ✅ Zaimplementowany, nie wymaga zmian
 - **Funkcjonalność**:
@@ -188,6 +204,7 @@
 #### 1.2.2 Wspólne Komponenty Layout
 
 ##### A. HeaderNav
+
 - **Plik**: `src/components/layout/HeaderNav.tsx`
 - **Status**: ✅ Zaimplementowany
 - **Odpowiedzialność**: Główna nawigacja dla zalogowanych użytkowników
@@ -205,6 +222,7 @@
 #### 1.3.1 Schematy Walidacji (Zod)
 
 ##### A. loginFormSchema
+
 - **Plik**: `src/lib/validation/ui/loginForm.schema.ts`
 - **Status**: ✅ Zaimplementowany
 - **Pola**:
@@ -217,6 +235,7 @@
   ```
 
 ##### B. registerFormSchema
+
 - **Plik**: `src/lib/validation/ui/registerForm.schema.ts`
 - **Status**: ✅ Zaimplementowany
 - **Pola**:
@@ -232,7 +251,9 @@
 #### 1.3.2 Komunikaty Błędów
 
 ##### A. Błędy Walidacji (Inline)
+
 Wyświetlane pod polem formularza z rolą `alert`:
+
 - **Email**:
   - "Please enter a valid email address" (format email nieprawidłowy)
 - **Password (Login)**:
@@ -243,7 +264,9 @@ Wyświetlane pod polem formularza z rolą `alert`:
   - "Password must contain at least one number"
 
 ##### B. Błędy Systemowe (Toast)
+
 Wyświetlane przez `toast.error()`:
+
 - **Login**:
   - "Invalid email or password" (401 z backend lub auth error)
   - "An error occurred during login. Please try again." (catch block)
@@ -256,6 +279,7 @@ Wyświetlane przez `toast.error()`:
   - "Failed to sign out. Please try again." (error w HeaderNav)
 
 ##### C. Komunikaty Sukcesu (Toast)
+
 - **Register**: "Account created successfully!" (przed redirect)
 
 ### 1.4 Kluczowe Scenariusze UX
@@ -263,54 +287,65 @@ Wyświetlane przez `toast.error()`:
 #### 1.4.1 Scenariusz: Nowy Użytkownik - Rejestracja
 
 **Krok 1**: Użytkownik wchodzi na `/` (landing page)
+
 - Widzi przycisk "Get Started"
 - Klika → przekierowanie `/register`
 
 **Krok 2**: Strona rejestracji `/register`
+
 - Formularz z polami: email, password, rememberMe (checked)
 - Podczas wpisywania hasła: password strength indicator aktualizuje się
 - Password requirements list widoczna cały czas
 - Walidacja inline po blur/change
 
 **Krok 3**: Submit formularza
+
 - Przycisk zmienia się na "Creating account..." (disabled)
 - Formularz disabled
 - Wywołanie `POST /api/auth/register`
 
 **Krok 4a**: Sukces
+
 - Toast: "Account created successfully!"
 - Automatyczne ustawienie sesji (backend zwraca tokens)
 - Redirect `window.location.href = "/dashboard"`
 
 **Krok 4b**: Błąd (email już istnieje)
+
 - Toast: "An account with this email already exists"
 - Formularz enabled
 - Focus na pole email
 
 **Krok 4c**: Błąd (network/server)
+
 - Toast: "An error occurred during registration. Please try again."
 - Formularz enabled
 
 #### 1.4.2 Scenariusz: Powracający Użytkownik - Logowanie
 
 **Krok 1**: Użytkownik wchodzi na `/login`
+
 - Jeśli zalogowany: automatyczny redirect `/dashboard` (server-side w middleware)
 - Jeśli niezalogowany: formularz logowania
 
 **Krok 2**: Wypełnienie formularza
+
 - Email (autofocus), password
 - Remember me zaznaczone domyślnie
 - Inline validation
 
 **Krok 3**: Submit
+
 - Przycisk: "Signing in..." (disabled)
 - Wywołanie `POST /api/auth/login`
 
 **Krok 4a**: Sukces
+
 - Sesja ustawiona (cookies/localStorage zależnie od rememberMe)
 - Redirect `/dashboard`
 
 **Krok 4b**: Błąd (nieprawidłowe dane)
+
 - Toast: "Invalid email or password"
 - Formularz enabled
 - Focus na pole email
@@ -318,13 +353,16 @@ Wyświetlane przez `toast.error()`:
 #### 1.4.3 Scenariusz: Wylogowanie
 
 **Krok 1**: Użytkownik w aplikacji klika "Sign Out" w HeaderNav
+
 - Przycisk disabled, loading state
 
 **Krok 2**: Wywołanie endpoint
+
 - `POST /api/auth/logout`
 - Sukcesywne usunięcie sesji
 
 **Krok 3**: Redirect
+
 - `window.location.href = "/login"`
 
 #### 1.4.4 Scenariusz: Próba Dostępu do Chronionej Strony
@@ -332,10 +370,12 @@ Wyświetlane przez `toast.error()`:
 **Krok 1**: Niezalogowany użytkownik próbuje wejść na `/dashboard`
 
 **Krok 2**: Middleware wykrywa brak sesji
+
 - Redirect: `return Astro.redirect("/login")`
 - Opcjonalnie: query param `?redirect=/dashboard`
 
 **Krok 3**: Po zalogowaniu
+
 - Jeśli był redirect param: redirect tam
 - Jeśli nie: redirect `/dashboard` (default)
 
@@ -352,6 +392,7 @@ Wyświetlane przez `toast.error()`:
 **Odpowiedzialność**: Rejestracja nowego użytkownika + auto-login
 
 **Request**:
+
 ```typescript
 POST /api/auth/register
 Content-Type: application/json
@@ -364,18 +405,21 @@ Content-Type: application/json
 ```
 
 **Walidacja Input (Zod)**:
+
 ```typescript
 const registerRequestSchema = z.object({
   email: z.string().email(),
-  password: z.string()
+  password: z
+    .string()
     .min(8)
     .regex(/[A-Za-z]/)
     .regex(/[0-9]/),
-  rememberMe: z.boolean().default(true)
+  rememberMe: z.boolean().default(true),
 });
 ```
 
 **Logika**:
+
 1. Walidacja input przez Zod schema
 2. Sprawdzenie czy email już istnieje (opcjonalne, Supabase to zrobi)
 3. Wywołanie `supabase.auth.signUp({ email, password })`
@@ -388,6 +432,7 @@ const registerRequestSchema = z.object({
 8. Zwrócenie response z user data
 
 **Response Success (201)**:
+
 ```json
 {
   "data": {
@@ -409,6 +454,7 @@ const registerRequestSchema = z.object({
 ```
 
 **Response Errors**:
+
 - `400 Bad Request`: Walidacja failed
   ```json
   {
@@ -431,10 +477,12 @@ const registerRequestSchema = z.object({
 - `500 Internal Server Error`: Supabase error lub inny błąd serwera
 
 **Headers Response**:
+
 - Jeśli `rememberMe = true`: `Set-Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict; Max-Age=...`
 - Tokeny (access_token i refresh_token) ustawiane wyłącznie jako httpOnly cookies (nie zwracamy w body)
 
 **Logging**:
+
 - Info: "User registered successfully: {email}"
 - Error: "Registration failed: {error}"
 
@@ -447,6 +495,7 @@ const registerRequestSchema = z.object({
 **Odpowiedzialność**: Logowanie użytkownika
 
 **Request**:
+
 ```typescript
 POST /api/auth/login
 Content-Type: application/json
@@ -459,15 +508,17 @@ Content-Type: application/json
 ```
 
 **Walidacja Input**:
+
 ```typescript
 const loginRequestSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1), // nie sprawdzamy szczegółów, Supabase to zweryfikuje
-  rememberMe: z.boolean().default(true)
+  rememberMe: z.boolean().default(true),
 });
 ```
 
 **Logika**:
+
 1. Walidacja input
 2. Wywołanie `supabase.auth.signInWithPassword({ email, password })`
 3. Jeśli błąd: zwróć 401 (nie ujawniaj szczegółów czy email/password nieprawidłowy)
@@ -476,6 +527,7 @@ const loginRequestSchema = z.object({
 6. Zwrócenie response z user data
 
 **Response Success (200)**:
+
 ```json
 {
   "data": {
@@ -497,6 +549,7 @@ const loginRequestSchema = z.object({
 ```
 
 **Response Errors**:
+
 - `400 Bad Request`: Walidacja failed
 - `401 Unauthorized`: Nieprawidłowy email lub hasło
   ```json
@@ -510,9 +563,11 @@ const loginRequestSchema = z.object({
 - `500 Internal Server Error`
 
 **Headers Response**:
+
 - Set-Cookie dla refresh token (jeśli rememberMe)
 
 **Logging**:
+
 - Info: "User logged in: {email}"
 - Error: "Login failed for: {email}"
 
@@ -525,31 +580,38 @@ const loginRequestSchema = z.object({
 **Odpowiedzialność**: Wylogowanie użytkownika
 
 **Request**:
+
 ```typescript
 POST /api/auth/logout
 Authorization: Bearer {access_token}
 ```
+
 Lub token z cookie jeśli używamy cookie-based sessions.
 
 **Logika**:
+
 1. Pobranie tokenu z header lub cookie
 2. Wywołanie `supabase.auth.signOut()`
 3. Usunięcie cookie z refresh token (jeśli używamy)
 4. Zwrócenie sukcesu
 
 **Response Success (204)**:
+
 ```
 204 No Content
 ```
 
 **Response Errors**:
+
 - `401 Unauthorized`: Brak tokenu lub nieprawidłowy token
 - `500 Internal Server Error`
 
 **Headers Response**:
+
 - `Set-Cookie: refresh_token=; Max-Age=0; HttpOnly; Secure` (usunięcie cookie)
 
 **Logging**:
+
 - Info: "User logged out: {userId}"
 
 ---
@@ -563,6 +625,7 @@ Lub token z cookie jeśli używamy cookie-based sessions.
 **Status**: ⚠️ Wymaga rozszerzenia
 
 **Obecna implementacja**:
+
 - Tworzy Supabase client z tokenem z Authorization header
 - Dodaje `context.locals.supabase`
 
@@ -585,7 +648,7 @@ const PUBLIC_ROUTES = ["/", "/login", "/register"];
 const PUBLIC_API_ROUTES = [
   "/api/auth/login",
   "/api/auth/register",
-  "/api/auth/logout" // pozwól zawsze wyczyścić cookies
+  "/api/auth/logout", // pozwól zawsze wyczyścić cookies
 ];
 
 // Trasy wymagające roli admin
@@ -597,7 +660,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Pobierz token z header lub cookie
   const authHeader = context.request.headers.get("authorization");
   let token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
-  
+
   // Jeśli brak w header, sprawdź cookie (dla session-based auth)
   if (!token) {
     const cookies = context.cookies;
@@ -614,14 +677,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabase;
 
   // Sprawdź czy trasa jest publiczna
-  const isPublicRoute = PUBLIC_ROUTES.some(route => route === "/" ? pathname === "/" : pathname === route);
-  const isPublicApiRoute = PUBLIC_API_ROUTES.some(route => pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => (route === "/" ? pathname === "/" : pathname === route));
+  const isPublicApiRoute = PUBLIC_API_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isPublicRoute || isPublicApiRoute) {
     // Dla publicznych tras: jeśli użytkownik JEST zalogowany i próbuje wejść na /login lub /register,
     // przekieruj do /dashboard
     if ((pathname === "/login" || pathname === "/register") && token) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         return context.redirect("/dashboard");
       }
@@ -636,7 +701,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Weryfikuj token i pobierz użytkownika
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
     // Token nieprawidłowy lub wygasły
@@ -644,7 +712,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Sprawdź czy trasa wymaga admin
-  const isAdminRoute = ADMIN_ROUTES.some(route => pathname.startsWith(route));
+  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   if (isAdminRoute) {
     const isAdmin = user.app_metadata?.role === "admin";
     if (!isAdmin) {
@@ -661,6 +729,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ```
 
 **Typy Astro (src/env.d.ts)**:
+
 ```typescript
 /// <reference types="astro/client" />
 
@@ -946,11 +1015,7 @@ export interface ApiSuccessResponse<T = any> {
   };
 }
 
-export function errorResponse(
-  code: string,
-  message: string,
-  details?: Record<string, any>
-): Response {
+export function errorResponse(code: string, message: string, details?: Record<string, any>): Response {
   const statusCodes: Record<string, number> = {
     VALIDATION_ERROR: 400,
     INVALID_CREDENTIALS: 401,
@@ -1053,6 +1118,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 #### 2.5.1 Auth Settings
 
 **W Supabase Dashboard → Authentication → Settings**:
+
 - Enable email confirmations: NO (dla MVP)
 - Minimum password length: 8
 - Password requirements: Enforce (letter + number checked in app)
@@ -1168,12 +1234,14 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 #### 3.2.1 Token Storage Strategy
 
 **Access Token** (krótkoterminowy, 1h):
+
 - Przechowywany w httpOnly cookie: `access_token`
 - Używany do autoryzacji żądań API
 - Przesyłany automatycznie przez przeglądarkę
 - Nie dostępny dla JavaScript (bezpieczeństwo)
 
 **Refresh Token** (długoterminowy):
+
 - Przechowywany w httpOnly cookie: `refresh_token`
 - Lifetime zależny od `rememberMe`:
   - `true`: 30 dni (Max-Age: 2592000)
@@ -1181,6 +1249,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 - Używany do odświeżania access token
 
 **Cookie Attributes**:
+
 ```
 HttpOnly: true        // Nie dostępny dla JS
 Secure: true (prod)   // Tylko HTTPS
@@ -1191,35 +1260,35 @@ Path: /               // Dostępny dla całej aplikacji
 #### 3.2.2 Token Refresh Mechanism
 
 **W Middleware** (opcjonalnie):
+
 ```typescript
 // Jeśli access_token wygasł, ale refresh_token valid:
 if (accessTokenExpired && refreshToken) {
   const { data, error } = await supabase.auth.refreshSession({
-    refresh_token: refreshToken
+    refresh_token: refreshToken,
   });
-  
+
   if (!error && data.session) {
     // Ustaw nowe tokeny w cookies
-    sessionManager.setSession(
-      data.session.access_token,
-      data.session.refresh_token,
-      { rememberMe: true }
-    );
+    sessionManager.setSession(data.session.access_token, data.session.refresh_token, { rememberMe: true });
   }
 }
 ```
 
 **Client-side**:
+
 - UI nie zarządza tokenami – wyłącznie cookies httpOnly ustawiane przez backend
 
 #### 3.2.3 Session Persistence
 
 **Remember Me = true**:
+
 - Refresh token ważny 30 dni
 - Użytkownik pozostaje zalogowany przez 30 dni (lub do ręcznego wylogowania)
 - Idealne dla użytkowników na prywatnych urządzeniach
 
 **Remember Me = false**:
+
 - Refresh token ważny tylko w sesji przeglądarki
 - Wylogowanie po zamknięciu przeglądarki
 - Idealne dla współdzielonych urządzeń
@@ -1236,12 +1305,14 @@ if (accessTokenExpired && refreshToken) {
 #### 3.3.2 Token Security
 
 **JWT Tokens**:
+
 - Podpisane przez Supabase Secret Key
 - Zawierają: user_id, email, role, exp (expiry)
 - Weryfikowane przy każdym żądaniu do API
 - Nie można ich podrobić bez dostępu do secret key
 
 **Ochrona przed atakami**:
+
 - **XSS**: Tokeny w httpOnly cookies (nie dostępne dla JS)
 - **CSRF**: SameSite=Strict + można dodać CSRF tokens
 - **Session Hijacking**: Secure cookies (HTTPS only)
@@ -1250,6 +1321,7 @@ if (accessTokenExpired && refreshToken) {
 #### 3.3.3 Rate Limiting (Opcjonalne, do rozważenia)
 
 **Na poziomie API Endpoints**:
+
 ```typescript
 // Można użyć biblioteki np. @upstash/ratelimit lub własna implementacja
 
@@ -1273,6 +1345,7 @@ NODE_ENV=development  # lub production
 ```
 
 **Użycie**:
+
 - `SUPABASE_URL` i `SUPABASE_KEY`: Do tworzenia client
 - `SUPABASE_SERVICE_ROLE_KEY`: (rezerwa na operacje admin; usuwanie konta poza MVP)
 
@@ -1281,6 +1354,7 @@ NODE_ENV=development  # lub production
 #### 3.5.1 Modyfikacje w Istniejących Komponentach
 
 **HeaderNav.tsx**:
+
 ```typescript
 // ZMIANA: logout przez API endpoint
 const handleSignOut = async () => {
@@ -1288,7 +1362,7 @@ const handleSignOut = async () => {
   try {
     // PRZED: await supabaseClient.auth.signOut();
     // PO:
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   } catch (error) {
     toast.error("Failed to sign out. Please try again.");
@@ -1298,6 +1372,7 @@ const handleSignOut = async () => {
 ```
 
 **LoginForm.tsx**:
+
 ```typescript
 // ZMIANA: login przez API endpoint zamiast bezpośrednio Supabase
 const onSubmit = async (values: LoginFormValues) => {
@@ -1305,18 +1380,18 @@ const onSubmit = async (values: LoginFormValues) => {
   try {
     // PRZED: const { data, error } = await supabaseClient.auth.signInWithPassword(...)
     // PO:
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values)
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       toast.error(error.error.message || "Invalid email or password");
       return;
     }
-    
+
     // Sukces: cookies są ustawione automatycznie przez backend
     window.location.href = "/dashboard";
   } catch (error) {
@@ -1328,6 +1403,7 @@ const onSubmit = async (values: LoginFormValues) => {
 ```
 
 **RegisterForm.tsx**:
+
 ```typescript
 // ZMIANA: rejestracja przez API endpoint
 const onSubmit = async (values: RegisterFormValues) => {
@@ -1335,18 +1411,18 @@ const onSubmit = async (values: RegisterFormValues) => {
   try {
     // PRZED: await supabaseClient.auth.signUp(...) + auto-login
     // PO:
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values)
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       toast.error(error.error.message || "Failed to create account");
       return;
     }
-    
+
     toast.success("Account created successfully!");
     window.location.href = "/dashboard";
   } catch (error) {
@@ -1364,7 +1440,7 @@ const onSubmit = async (values: RegisterFormValues) => {
 1. `src/pages/api/auth/register.ts`
 2. `src/pages/api/auth/login.ts`
 3. `src/pages/api/auth/logout.ts`
-// DELETE /api/account – poza MVP
+   // DELETE /api/account – poza MVP
 
 #### 3.5.3 Nowe Serwisy do Utworzenia
 
@@ -1419,57 +1495,69 @@ const onSubmit = async (values: RegisterFormValues) => {
 ### 4.1 Komponenty do Zaimplementowania
 
 #### 4.1.1 Frontend (React Components)
+
 1. ✅ LoginForm - zmodyfikować (API endpoint zamiast Supabase direct)
 2. ✅ RegisterForm - zmodyfikować (API endpoint zamiast Supabase direct)
 3. ✅ PasswordField - bez zmian
 
 #### 4.1.2 Frontend (Astro Pages)
+
 1. ✅ `/` - landing page - bez zmian (opcjonalnie server-side redirect)
 2. ✅ `/login` - bez zmian
 3. ✅ `/register` - bez zmian
 
 #### 4.1.3 Backend (API Endpoints)
+
 1. ❌ `POST /api/auth/register` - utworzyć
 2. ❌ `POST /api/auth/login` - utworzyć
 3. ❌ `POST /api/auth/logout` - utworzyć
 
 #### 4.1.4 Backend (Services)
+
 1. ❌ `AuthService` - utworzyć
 2. ❌ `SessionManager` - utworzyć
 
 #### 4.1.5 Backend (Validation)
+
 1. ❌ API schemas - utworzyć
 
 #### 4.1.6 Backend (Utils)
+
 1. ❌ `apiResponse` helpers - utworzyć
 
 #### 4.1.7 Middleware
+
 1. ⚠️ `src/middleware/index.ts` - rozszerzyć (route protection, redirect logic)
 
 ### 4.2 Kolejność Implementacji (Rekomendowana)
 
 **Faza 1: Backend Foundation**
+
 1. Utworzyć `apiResponse.ts` helpers
 2. Utworzyć API validation schemas (`authSchemas.ts`)
 3. Utworzyć `SessionManager`
 4. Utworzyć `AuthService`
 
 **Faza 2: API Endpoints**
+
 1. `POST /api/auth/register` (z testowaniem)
 2. `POST /api/auth/login` (z testowaniem)
 3. `POST /api/auth/logout` (z testowaniem)
 
 **Faza 3: Middleware Enhancement**
+
 1. Rozszerzyć middleware o route protection
 2. Dodać redirect logic dla zalogowanych/niezalogowanych
 3. Dodać admin role check
 
 **Faza 4: Frontend Updates**
+
 1. Zmodyfikować `LoginForm` (użycie API endpoint)
 2. Zmodyfikować `RegisterForm` (użycie API endpoint)
 3. Zmodyfikować `HeaderNav` (logout przez API)
 
 **Faza 5: Testing & Polish**
+
 1. Manual testing całego flow
 2. Security testing (cookies, tokens, etc.)
 3. Accessibility testing (keyboard, screen reader)
@@ -1478,15 +1566,18 @@ const onSubmit = async (values: RegisterFormValues) => {
 ### 4.3 Konfiguracja External Services
 
 **Supabase Dashboard**:
+
 1. Skonfigurować Auth settings (JWT expiry, password requirements)
 2. Opcjonalnie: Rate limiting policies
 
 **Environment Variables**:
+
 1. Sprawdzić `SUPABASE_URL` i `SUPABASE_KEY`
 
 ### 4.4 Dokumentacja
 
 **Do zaktualizowania**:
+
 1. README.md - dodać sekcję "Authentication"
 2. API documentation - dodać auth endpoints
 3. Environment variables example (.env.example)
@@ -1510,9 +1601,9 @@ const onSubmit = async (values: RegisterFormValues) => {
 Specyfikacja zawiera wszystkie niezbędne informacje do implementacji pełnego systemu autentykacji zgodnego z wymaganiami PRD, API Plan i UI Plan, przy użyciu stack'u technologicznego (Astro 5, React 19, TypeScript 5, Supabase Auth).
 
 Główne założenia MVP:
+
 - **UI nie łączy się bezpośrednio z Supabase** - wszystkie operacje autentykacji przez API endpoints
 - **Server-side route protection** - middleware sprawdza autentykację przed renderowaniem stron
 - **Secure session management** - httpOnly cookies, proper token handling
 - **Remember me functionality** - długotrwałe sesje dla zaufanych urządzeń
 - **Accessibility & UX first** - inline validation, toast notifications, loading states, keyboard navigation
-

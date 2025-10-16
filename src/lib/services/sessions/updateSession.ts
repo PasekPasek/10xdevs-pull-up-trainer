@@ -4,6 +4,7 @@ import type { Database } from "../../../db/database.types";
 import type { SessionRow, UpdateSessionCommand } from "../../../types";
 import { createHttpError } from "../../utils/httpError";
 import { getSession } from "./getSession";
+import { computeTotal } from "@/lib/utils/session";
 
 interface UpdateSessionDependencies {
   supabase: SupabaseClient<Database>;
@@ -65,8 +66,7 @@ export async function updateSession(
     updatePayload.set_5 = set5;
 
     // Recalculate totalReps
-    const totalReps = command.sets.reduce((sum, reps) => sum + (reps ?? 0), 0);
-    updatePayload.total_reps = totalReps;
+    updatePayload.total_reps = computeTotal(command.sets);
 
     // Check if sets changed for AI sessions
     const setsChanged =

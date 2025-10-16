@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Play, CheckCircle, XCircle, Edit, Trash2 } from "lucide-react";
 
-import type { SessionDetailDTO, CompleteSessionCommand, SessionSets } from "@/types";
+import type { SessionDetailDTO, CompleteSessionCommand } from "@/types";
 import {
   useStartSessionMutation,
   useCompleteSessionMutation,
@@ -16,6 +16,7 @@ import { EditSessionDialog, type EditSessionFormValues } from "@/components/dash
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog";
 import { ETagConflictDialog } from "@/components/dashboard/ETagConflictDialog";
 import { isHttpError } from "@/lib/utils/httpError";
+import { normalizeSets } from "@/lib/utils/session";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface ActionBarProps {
@@ -42,6 +43,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [failDialogOpen, setFailDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
 
   // Mutations
@@ -120,10 +122,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       toast.success("Session deleted successfully");
       setDeleteDialogOpen(false);
-      // Navigate to dashboard after a brief delay
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 500);
+      setPendingRedirect(true);
       onDeleteSuccess?.();
     },
     onError: (error) => {
@@ -141,9 +140,9 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
     startMutation.mutate({ sessionId: session.id });
   };
 
-  const handleComplete = (values: { sets: SessionSets; rpe?: number | null }) => {
+  const handleComplete = (values: { sets: (number | null)[]; rpe?: number | null }) => {
     const command: CompleteSessionCommand = {
-      sets: values.sets,
+      sets: normalizeSets(values.sets),
       rpe: values.rpe ?? undefined,
     };
     completeMutation.mutate({ sessionId: session.id, command });
@@ -156,7 +155,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
   const handleEdit = (values: EditSessionFormValues) => {
     const command = {
       sessionDate: values.sessionDate,
-      sets: values.sets,
+      sets: normalizeSets(values.sets),
       aiComment: values.aiComment?.trim() || null,
       markAsModified: true,
     };
@@ -176,6 +175,18 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
     await queryClient.invalidateQueries({ queryKey: ["session", session.id] });
     toast.success("Session data refreshed");
   };
+
+  useEffect(() => {
+    if (!pendingRedirect) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [pendingRedirect]);
 
   const hasActions = session.actions.length > 0;
   if (!hasActions) {

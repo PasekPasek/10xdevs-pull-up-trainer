@@ -44,6 +44,13 @@ export function AIWizardModal({ quota, onSuccess }: AIWizardModalProps) {
     },
   });
 
+  // Auto-trigger generation when step is "loading" and maxPullups is undefined (existing users)
+  useEffect(() => {
+    if (step === "loading" && maxPullups === undefined && !generateMutation.isPending && !generationId) {
+      generateMutation.mutate({});
+    }
+  }, [step, maxPullups, generationId, generateMutation]);
+
   const retryMutation = useRetryAiGenerationMutation({
     onSuccess: () => {
       setWizardState({ step: "result" });
@@ -88,7 +95,7 @@ export function AIWizardModal({ quota, onSuccess }: AIWizardModalProps) {
   }
 
   return (
-    <Dialog open={step !== "quota"} onOpenChange={(open) => (open ? openWizard() : closeWizard())}>
+    <Dialog open={true} onOpenChange={(open) => (open ? openWizard() : closeWizard())}>
       <DialogContent className="sm:max-w-md">
         {step === "input" ? (
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -70,8 +70,13 @@ export const createSessionSchema = z
     const maxFutureDate = new Date(now);
     maxFutureDate.setDate(now.getDate() + MAX_FUTURE_DAYS);
 
+    // Compare dates only (ignore time) for past/future determination
+    // This prevents microsecond timing issues where "today" sessions are treated as "past"
+    const sessionDateOnly = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate());
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     const isFuture = parsedDate > now;
-    const isPast = parsedDate < now;
+    const isPast = sessionDateOnly < todayDateOnly;
 
     if (isFuture && parsedDate > maxFutureDate) {
       ctx.addIssue({

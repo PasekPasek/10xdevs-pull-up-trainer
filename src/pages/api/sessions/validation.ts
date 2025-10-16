@@ -35,27 +35,14 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -77,7 +64,7 @@ export const GET: APIRoute = async (context) => {
     const { sessionDate, status, ignoreRestWarning } = queryResult.data;
 
     // Validate session
-    const result = await validateSession({ supabase }, userResult.user.id, sessionDate, status, ignoreRestWarning);
+    const result = await validateSession({ supabase }, user.id, sessionDate, status, ignoreRestWarning);
 
     const body = JSON.stringify({
       data: result,

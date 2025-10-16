@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const emailFieldRef = useRef<HTMLInputElement | null>(null);
   const [passwordStrength, setPasswordStrength] = useState<{
     strength: "weak" | "medium" | "strong";
     percentage: number;
@@ -51,6 +52,10 @@ function RegisterForm() {
     if (redirect) {
       setRedirectPath(redirect);
     }
+  }, []);
+
+  useEffect(() => {
+    emailFieldRef.current?.focus({ preventScroll: true });
   }, []);
 
   const onSubmit = useCallback(
@@ -100,7 +105,7 @@ function RegisterForm() {
         toast.success("Account created successfully!");
         window.location.href = redirectPath;
       } catch (error) {
-        console.error("Registration error:", error);
+        globalThis.reportError?.(error);
         toast.error("An error occurred during registration. Please try again.");
       } finally {
         setIsLoading(false);
@@ -143,10 +148,13 @@ function RegisterForm() {
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  autoFocus
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.email)}
                   {...field}
+                  ref={(element) => {
+                    field.ref(element);
+                    emailFieldRef.current = element;
+                  }}
                 />
               )}
             />

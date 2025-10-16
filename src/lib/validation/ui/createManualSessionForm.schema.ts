@@ -11,17 +11,20 @@ const MIN_REPS_PER_SET = 1;
 const TOTAL_SETS = 5;
 
 /**
- * Session date in local datetime-local format (YYYY-MM-DDTHH:mm)
- * Will be converted to UTC ISO for API submission
+ * Session date in local date format (YYYY-MM-DD)
+ * Will be converted to UTC ISO with appropriate time for API submission
+ * - Today's date: uses current time for "planned" sessions
+ * - Past date: uses start of day (00:00) for historical sessions
  */
 const sessionDateLocalSchema = z
   .string({ required_error: "Session date is required" })
   .min(1, "Session date is required")
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (use YYYY-MM-DD)")
   .refine((value) => {
-    // Validate datetime-local format
+    // Validate date format
     const date = new Date(value);
     return !Number.isNaN(date.getTime());
-  }, "Invalid date/time format");
+  }, "Invalid date format");
 
 /**
  * Session status for the form
@@ -89,22 +92,23 @@ export const createManualSessionFormSchema = z
   .superRefine((value, ctx) => {
     const { sessionDateLocal, status, sets, rpe, startNow } = value;
 
-    // Parse the local datetime
-    const parsedDate = new Date(sessionDateLocal);
+    // Parse the local date (YYYY-MM-DD)
+    const parsedDate = new Date(sessionDateLocal + "T00:00:00");
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     if (Number.isNaN(parsedDate.getTime())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Invalid date/time",
+        message: "Invalid date",
         path: ["sessionDateLocal"],
       });
       return;
     }
 
-    // Check if date is in past, present, or future
-    const isPast = parsedDate < now;
-    const isTodayOrFuture = parsedDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Check if date is in past, today, or future (compare dates only, not time)
+    const isPast = parsedDate < today;
+    const isTodayOrFuture = parsedDate >= today;
 
     // Calculate max future date
     const maxFutureDate = new Date(now);
@@ -194,11 +198,9 @@ export function getDefaultFormValues(): CreateManualSessionFormValues {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
 
   return {
-    sessionDateLocal: `${year}-${month}-${day}T${hours}:${minutes}`,
+    sessionDateLocal: `${year}-${month}-${day}`,
     status: "planned",
     startNow: false,
     sets: [null, null, null, null, null],

@@ -126,6 +126,20 @@ export async function createApiRequest<TData>(input: RequestInfo, init?: Request
     });
   }
 
+  // Handle 204 No Content - no body to parse
+  if (response.status === 204) {
+    return undefined as TData;
+  }
+
+  // Check if response has content
+  const contentType = response.headers.get("content-type");
+  const hasJsonContent = contentType?.includes("application/json");
+
+  if (!hasJsonContent) {
+    // If no JSON content, return empty response
+    return undefined as TData;
+  }
+
   try {
     return (await response.json()) as TData;
   } catch (error) {

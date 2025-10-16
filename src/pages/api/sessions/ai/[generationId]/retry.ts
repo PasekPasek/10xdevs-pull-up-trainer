@@ -27,27 +27,14 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -70,7 +57,7 @@ export const POST: APIRoute = async (context) => {
       .from("generations")
       .select("*")
       .eq("id", generationId)
-      .eq("user_id", userResult.user.id)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     if (generationError) {
@@ -91,7 +78,7 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const recentSessions = await fetchRecentSessionsForUser(supabase, userResult.user.id);
+    const recentSessions = await fetchRecentSessionsForUser(supabase, user.id);
     const isNewUser = recentSessions.length === 0;
 
     let maxPullups: number | undefined;
@@ -112,14 +99,14 @@ export const POST: APIRoute = async (context) => {
 
     const { session, generation: newGeneration } = await generateAiSession(
       { supabase },
-      userResult.user.id,
+      user.id,
       maxPullups,
       generation.model,
       false
     );
 
     // Get updated quota
-    const quota = await getQuota({ supabase }, userResult.user.id);
+    const quota = await getQuota({ supabase }, user.id);
 
     // Map to DTOs
     const sessionDto = mapSessionRowToDTO(session);

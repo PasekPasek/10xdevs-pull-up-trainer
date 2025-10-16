@@ -6,7 +6,9 @@ import { getSession } from "../../../lib/services/sessions/getSession";
 import { deleteSession } from "../../../lib/services/sessions/deleteSession";
 import { updateSession } from "../../../lib/services/sessions/updateSession";
 import { mapSessionRowToDetailDTO } from "../../../lib/services/sessions/mappers";
+import { normalizeSets } from "@/lib/utils/session";
 import { updateSessionSchema } from "../../../lib/validation/sessions/updateSession.schema";
+import type { UpdateSessionCommand } from "../../../types";
 
 export const prerender = false;
 
@@ -29,27 +31,14 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -68,7 +57,7 @@ export const GET: APIRoute = async (context) => {
     const { sessionId } = paramsResult.data;
 
     // Fetch session
-    const session = await getSession({ supabase }, userResult.user.id, sessionId);
+    const session = await getSession({ supabase }, user.id, sessionId);
 
     // Map to detail DTO
     const sessionDto = mapSessionRowToDetailDTO(session);
@@ -111,27 +100,14 @@ export const PATCH: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -188,16 +164,16 @@ export const PATCH: APIRoute = async (context) => {
     }
 
     // Build command
-    const command = {
+    const updateCommand: UpdateSessionCommand = {
       sessionDate: bodyResult.data.sessionDate,
-      sets: bodyResult.data.sets,
-      notes: bodyResult.data.notes,
-      aiComment: bodyResult.data.aiComment,
+      sets: bodyResult.data.sets ? normalizeSets(bodyResult.data.sets) : undefined,
+      notes: bodyResult.data.notes ?? undefined,
+      aiComment: bodyResult.data.aiComment ?? undefined,
       markAsModified: bodyResult.data.markAsModified,
     };
 
     // Update session
-    const updatedSession = await updateSession({ supabase }, userResult.user.id, sessionId, command, lastUpdatedAt);
+    const updatedSession = await updateSession({ supabase }, user.id, sessionId, updateCommand, lastUpdatedAt);
 
     // Map to DTO
     const sessionDto = mapSessionRowToDetailDTO(updatedSession);
@@ -240,27 +216,14 @@ export const DELETE: APIRoute = async (context) => {
       });
     }
 
-    const authHeader = context.request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
+    const user = context.locals.user;
 
-    if (!token) {
+    if (!user) {
       throw createHttpError({
         status: 401,
         code: "UNAUTHENTICATED",
         message: "Authentication required",
         details: { requestId },
-      });
-    }
-
-    const { data: userResult, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userResult?.user) {
-      throw createHttpError({
-        status: 401,
-        code: "UNAUTHENTICATED",
-        message: "Authentication required",
-        details: { requestId },
-        cause: userError,
       });
     }
 
@@ -279,7 +242,7 @@ export const DELETE: APIRoute = async (context) => {
     const { sessionId } = paramsResult.data;
 
     // Delete session
-    await deleteSession({ supabase }, userResult.user.id, sessionId);
+    await deleteSession({ supabase }, user.id, sessionId);
 
     return new Response(null, {
       status: 204,

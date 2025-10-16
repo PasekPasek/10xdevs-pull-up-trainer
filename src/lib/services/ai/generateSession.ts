@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "../../../db/database.types";
+import type { Database, Json } from "../../../db/database.types";
 import type {
   GenerationInsert,
   GenerationRow,
@@ -66,7 +66,7 @@ export async function generateAiSession(
     sessions: recentSessions,
   });
 
-  const openRouterSessions: HistoricalSessionDTO[] = recentSessions.map(({ id: _id, ...session }) => ({
+  const openRouterSessions: HistoricalSessionDTO[] = recentSessions.map((session) => ({
     sessionDate: session.sessionDate,
     sets: session.sets,
     status: session.status,
@@ -250,7 +250,7 @@ function sanitizeSessionSets(row: HistoricalSessionRow): HistoricalSessionDTO["s
 
 function deriveTotalReps(row: HistoricalSessionRow): number {
   const sets = sanitizeSessionSets(row);
-  const sum = sets.reduce((acc, value) => acc + value, 0);
+  const sum = sets.reduce((accumulator, value) => (accumulator ?? 0) + (value ?? 0), 0);
   return row.total_reps ?? sum;
 }
 
@@ -294,9 +294,11 @@ function buildPromptMetadata(args: {
       });
     }
 
+    const sanitizedMax = Math.max(1, Math.min(60, Math.round(args.maxPullups ?? 1)));
+
     return {
       mode: "new_user",
-      maxPullups: Math.max(1, Math.min(60, Math.round(args.maxPullups!))),
+      maxPullups: sanitizedMax,
     } satisfies PromptMetadataNewUser;
   }
 
@@ -382,8 +384,8 @@ async function persistSessionAndGeneration(options: PersistSessionOptions): Prom
     model,
     status: "success",
     duration_ms: Math.round(durationMs),
-    prompt_data: promptMetadata,
-    response_data: llm.responseData,
+    prompt_data: promptMetadata as unknown as Json,
+    response_data: llm.responseData as unknown as Json,
     session_id: session.id,
   };
 
@@ -437,7 +439,7 @@ async function handleGenerationFailure(
       model,
       status,
       duration_ms: Math.round(durationMs),
-      prompt_data: promptMetadata,
+      prompt_data: promptMetadata as unknown as Json,
       response_data: null,
       session_id: null,
     };

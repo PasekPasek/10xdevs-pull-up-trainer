@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { PasswordField } from "./PasswordField";
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm({
     resolver: zodResolver(loginFormSchema),
@@ -31,6 +32,10 @@ function LoginForm() {
     if (redirect) {
       setRedirectPath(redirect);
     }
+  }, []);
+
+  useEffect(() => {
+    emailFieldRef.current?.focus({ preventScroll: true });
   }, []);
 
   const onSubmit = useCallback(
@@ -55,7 +60,7 @@ function LoginForm() {
 
         window.location.href = redirectPath;
       } catch (error) {
-        console.error("Login error:", error);
+        globalThis.reportError?.(error);
         toast.error("An error occurred during login. Please try again.");
       } finally {
         setIsLoading(false);
@@ -86,10 +91,13 @@ function LoginForm() {
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  autoFocus
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.email)}
                   {...field}
+                  ref={(element) => {
+                    field.ref(element);
+                    emailFieldRef.current = element;
+                  }}
                 />
               )}
             />
@@ -148,7 +156,7 @@ function LoginForm() {
           </Button>
 
           <p className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a href="/register" className="font-medium text-primary hover:underline">
               Sign up
             </a>

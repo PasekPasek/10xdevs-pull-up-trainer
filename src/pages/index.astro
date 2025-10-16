@@ -1,6 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Dumbbell, TrendingUp, Zap, Target } from "lucide-react";
+
+export const prerender = false;
 ---
 
 <Layout title="Pull-Up Trainer - Track Your Progress">
@@ -70,17 +72,5 @@ import { Dumbbell, TrendingUp, Zap, Target } from "lucide-react";
         </div>
       </div>
     </div>
-
-    <!-- Auto-redirect for authenticated users -->
-    <script>
-      import { supabaseClient } from "@/db/supabase.client";
-
-      // Check if user is authenticated and redirect to dashboard
-      supabaseClient.auth.getUser().then(({ data }) => {
-        if (data.user) {
-          window.location.href = "/dashboard";
-        }
-      });
-    </script>
   </div>
 </Layout>

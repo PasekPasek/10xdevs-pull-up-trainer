@@ -560,7 +560,7 @@ Acceptance Criteria:
 ID: US-007
 Title: Permanently Delete Account (Post-MVP)
 Description: [Deferred] As a user, I want to delete my account and all associated data so that I can remove my information from the system.
- Acceptance Criteria:
+Acceptance Criteria:
 // Deferred to Post-MVP
 
 ### 5.2 Session Creation and Management

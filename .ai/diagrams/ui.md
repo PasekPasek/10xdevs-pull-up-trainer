@@ -1,6 +1,7 @@
 <architecture_analysis>
 
-1) Lista komponentów i elementów (wg PRD i auth-spec + kodu):
+1. Lista komponentów i elementów (wg PRD i auth-spec + kodu):
+
 - Strony publiczne: `src/pages/index.astro`, `src/pages/login.astro`, `src/pages/register.astro`
 - Strony chronione: `src/pages/dashboard.astro`, `src/pages/history.astro`, `src/pages/sessions/*.astro`, `src/pages/admin.astro`
 - Layouty: `src/layouts/Layout.astro`, `src/layouts/AuthenticatedLayout.astro`
@@ -14,19 +15,22 @@
 - (Do utworzenia) Serwisy backend: `src/lib/services/auth/authService.ts`, `src/lib/services/auth/sessionManager.ts`
 - (Do utworzenia) Walidacja API i helpery: `src/lib/validation/api/authSchemas.ts`, `src/lib/utils/apiResponse.ts`
 
-2) Główne strony i powiązane komponenty:
+2. Główne strony i powiązane komponenty:
+
 - `/login` → `Layout.astro` + `LoginForm` + `Toaster` (+ `QueryClientProvider` jako wyspa)
 - `/register` → `Layout.astro` + `RegisterForm` (z `PasswordField`, wskaźnik siły hasła) + `Toaster` (+ `QueryClientProvider`)
 - `/dashboard` → `AuthenticatedLayout.astro` (z `HeaderNav`) + widok treści (np. `DashboardView`)
 - `/history`, `/sessions/*`, `/admin` → `AuthenticatedLayout.astro` (z `HeaderNav`) + odpowiednie widoki
 
-3) Przepływ danych (stan docelowy po wdrożeniu specyfikacji):
+3. Przepływ danych (stan docelowy po wdrożeniu specyfikacji):
+
 - Login/Rejestracja: `LoginForm`/`RegisterForm` → (POST) API Login/Register → `AuthService` (Supabase) → `SessionManager` ustawia `access_token` + `refresh_token` w httpOnly cookies → przeglądarka → `middleware` czyta cookies i weryfikuje → `Astro.locals.user` dostępny na stronach chronionych.
 - Wylogowanie: `HeaderNav` → (POST) API Logout → `AuthService.signOut()` → `SessionManager.clearSession()` → redirect do `/login`.
 - Ochrona tras i SSR: `middleware` przepuszcza `/`, `/login`, `/register`; zalogowanych z `/login|/register` przekierowuje do `/dashboard`; niezalogowanych z tras chronionych przekierowuje do `/login` (z `?redirect=`).
 - Walidacja UI: `loginForm.schema.ts` i `registerForm.schema.ts` zapewniają inline validation; toasty błędów/sukcesu przez `sonner`.
 
-4) Krótki opis kluczowych elementów:
+4. Krótki opis kluczowych elementów:
+
 - `LoginForm`: formularz logowania (email, password, rememberMe), docelowo wysyła do API Login.
 - `RegisterForm`: rejestracja + auto-login, docelowo przez API Register; wskaźnik siły hasła.
 - `PasswordField`: współdzielony input hasła (show/hide, ARIA).
@@ -43,6 +47,7 @@ Wyróżnienia (wymagają aktualizacji/utworzenia): `LoginForm`, `RegisterForm`, 
 </architecture_analysis>
 
 <mermaid_diagram>
+
 ```mermaid
 flowchart TD
 
@@ -160,4 +165,5 @@ MW_Redirects -- "chronione bez sesji → /login" --> Page_Login
 class Comp_LoginForm,Comp_RegisterForm,Comp_HeaderNav,MW_Main needsUpdate
 class API_Login,API_Register,API_Logout,Service_Auth,Service_Session,Util_ApiResponse,Val_ApiSchemas needsUpdate
 ```
+
 </mermaid_diagram>

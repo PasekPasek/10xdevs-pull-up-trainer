@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "../../../db/database.types";
 import type { ApiEventDTO, EventsListQuery, PaginationMeta } from "../../../types";
+import type { Json } from "../../../db/database.types";
 import { createHttpError } from "../../utils/httpError";
 
 interface ListEventsDependencies {
@@ -63,7 +64,7 @@ export async function listEvents(
   const events: ApiEventDTO[] = (data ?? []).map((row) => ({
     id: row.id,
     eventType: row.event_type,
-    eventData: row.event_data as Record<string, unknown>,
+    eventData: row.event_data as Json,
     createdAt: row.created_at,
     userId: row.user_id,
   }));

@@ -1,5 +1,7 @@
 <user_journey_analysis>
-1) Ścieżki użytkownika z wymagań (PRD + Auth Spec):
+
+1. Ścieżki użytkownika z wymagań (PRD + Auth Spec):
+
 - Publiczne wejścia: "/" (landing), "/login", "/register"; cała reszta chroniona.
 - Rejestracja (US-001): formularz email+hasło, walidacja, sukces → auto‑logowanie → redirect do `\u002Fdashboard`; błędy (email istnieje, walidacja) → komunikaty.
 - Logowanie (US-002): email+hasło, Remember me, sukces → redirect do `\u002Fdashboard` lub do ścieżki z `redirect` param; błędy → komunikat.
@@ -9,14 +11,16 @@
 - Wylogowanie: akcja w nawigacji → czyszczenie sesji → redirect do `\u002Flogin`.
 - Admin (US-054): `\u002Fadmin` wymaga roli admin; brak roli → redirect do `\u002Fdashboard`.
 
-2) Główne podróże i stany:
+2. Główne podróże i stany:
+
 - Nowy użytkownik: Landing → Rejestracja → (walidacja/konflikty) → Auto‑logowanie → Ustawienie sesji (remember me) → Redirect do celu lub `\u002Fdashboard`.
 - Powracający użytkownik: Landing/Protected → Logowanie → (walidacja/niepoprawne dane) → Ustawienie sesji → Redirect.
 - Próba dostępu do chronionej strony bez sesji: Middleware → `\u002Flogin?redirect=...` → Logowanie → powrót do strony docelowej.
 - Odzyskiwanie hasła (Post‑MVP): Reset request → email → reset → auto‑logowanie → redirect.
 - Admin access: Autentykacja OK → sprawdzenie roli → AdminPanel lub Dashboard.
 
-3) Punkty decyzyjne i alternatywne ścieżki:
+3. Punkty decyzyjne i alternatywne ścieżki:
+
 - Walidacja formularzy (login/register) → błędy inline vs przejście dalej.
 - Istniejący email podczas rejestracji → błąd konfliktu.
 - Nieprawidłowe dane logowania → błąd autentykacji.
@@ -24,7 +28,8 @@
 - Obecność `redirect` → powrót do celu vs domyślny `\u002Fdashboard`.
 - Sprawdzenie roli dla `\u002Fadmin` → admin vs brak uprawnień.
 
-4) Opis celu kluczowych stanów:
+4. Opis celu kluczowych stanów:
+
 - StronaGlowna: landing z CTA do logowania/rejestracji; jeśli zalogowany → szybki dostęp.
 - FormularzLogowania: wprowadzenie danych; walidacja; wysyłka; obsługa błędów.
 - FormularzRejestracji: tworzenie konta; walidacja; konflikt email; auto‑logowanie po sukcesie.
@@ -32,7 +37,7 @@
 - Dashboard: główna funkcjonalność (karty sesji, akcje, AI, itp.).
 - Ochrona tras: wymusza autentykację i/lub uprawnienia admin przed dostępem.
 - OdzyskiwanieHasla: (Post‑MVP) przywrócenie dostępu bez tworzenia nowego konta.
-</user_journey_analysis>
+  </user_journey_analysis>
 
 <mermaid_diagram>
 
@@ -166,5 +171,3 @@ stateDiagram-v2
 ```
 
 </mermaid_diagram>
-
-

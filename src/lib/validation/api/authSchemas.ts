@@ -17,4 +17,5 @@ export const registerRequestSchema = z.object({
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;

@@ -3,6 +3,8 @@ import Layout from "../layouts/Layout.astro";
 import { QueryClientProvider } from "../lib/providers/QueryClientProvider";
 import { Toaster } from "../components/ui/sonner";
 import LoginForm from "../components/auth/LoginForm";
+
+export const prerender = false;
 ---
 
 <Layout title="Sign In - Pull-Up Trainer">

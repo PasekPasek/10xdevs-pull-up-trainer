@@ -1,17 +1,18 @@
 <authentication_analysis>
+
 - Przepływy autentykacji (wg PRD i spec):
-  1) Rejestracja: Browser → API → Supabase (signUp → auto signIn) → API
+  1. Rejestracja: Browser → API → Supabase (signUp → auto signIn) → API
      ustawia httpOnly cookies → redirect do `dashboard`.
-  2) Logowanie: Browser → API → Supabase (signInWithPassword) → API ustawia
+  2. Logowanie: Browser → API → Supabase (signInWithPassword) → API ustawia
      httpOnly cookies → redirect do `dashboard`.
-  3) Dostęp do stron chronionych: Browser → Middleware weryfikuje `access_token`
+  3. Dostęp do stron chronionych: Browser → Middleware weryfikuje `access_token`
      (cookies lub Authorization), przy braku/wygaśnięciu → próba odświeżenia z
      `refresh_token`, inaczej redirect do `login?redirect=...`.
-  4) Odświeżanie tokenu: Middleware używa `refresh_token` do
+  4. Odświeżanie tokenu: Middleware używa `refresh_token` do
      `auth.refreshSession`, ustawia nowe cookies i kontynuuje żądanie.
-  5) Wylogowanie: Browser → API → Supabase (signOut), API czyści cookies,
+  5. Wylogowanie: Browser → API → Supabase (signOut), API czyści cookies,
      Browser przechodzi do `login`.
-  6) Sprawdzenie roli admin: Middleware po `getUser()` sprawdza `app_metadata`;
+  6. Sprawdzenie roli admin: Middleware po `getUser()` sprawdza `app_metadata`;
      brak uprawnień → redirect do `dashboard`.
 
 - Główni aktorzy i interakcje:
@@ -37,9 +38,10 @@
   - Dostęp: Middleware przepuszcza żądanie, jeśli `getUser()` OK; gdy nie, próba
     `refreshSession()`, albo redirect do `login` z param `redirect`.
   - Wylogowanie: API woła `signOut()`, czyści cookies, Browser ląduje na `login`.
-</authentication_analysis>
+    </authentication_analysis>
 
 <mermaid_diagram>
+
 ```mermaid
 sequenceDiagram
 autonumber
@@ -141,6 +143,5 @@ deactivate API
 Browser->>Middleware: GET login
 Middleware-->>Browser: Strona logowania
 ```
+
 </mermaid_diagram>
-
-

@@ -10,6 +10,35 @@ export function localDateTimeToUtcIso(local: string): string {
 }
 
 /**
+ * Convert local date (YYYY-MM-DD) to UTC ISO format with appropriate time
+ * - If date is today: use current time
+ * - If date is in the past: use start of day in local timezone (00:00:00)
+ * - If date is in the future: use start of day in local timezone (00:00:00)
+ */
+export function localDateToUtcIso(localDate: string): string {
+  // Parse the date parts
+  const [year, month, day] = localDate.split("-").map(Number);
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Create date in local timezone (month is 0-indexed)
+  const selectedDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+
+  // If selected date is today, use current time
+  if (
+    selectedDate.getFullYear() === today.getFullYear() &&
+    selectedDate.getMonth() === today.getMonth() &&
+    selectedDate.getDate() === today.getDate()
+  ) {
+    return now.toISOString();
+  }
+
+  // For past or future dates, use start of day in local timezone
+  return selectedDate.toISOString();
+}
+
+/**
  * Convert UTC ISO string to local datetime-local format
  */
 export function utcIsoToLocalDateTime(iso: string): string {
@@ -47,12 +76,15 @@ export function formatLocalTime(iso: string): string {
 }
 
 /**
- * Get max future date (+30 days from now)
+ * Get max future date (+30 days from now) in YYYY-MM-DD format
  */
 export function getMaxFutureDate(): string {
   const date = new Date();
   date.setDate(date.getDate() + 30);
-  return utcIsoToLocalDateTime(date.toISOString());
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**

@@ -4,6 +4,7 @@ import type { Database } from "../../../db/database.types";
 import type { SessionRow, SessionSets } from "../../../types";
 import { createHttpError } from "../../utils/httpError";
 import { getSession } from "./getSession";
+import { computeTotal, normalizeSets } from "@/lib/utils/session";
 
 interface CompleteSessionDependencies {
   supabase: SupabaseClient<Database>;
@@ -36,7 +37,9 @@ export async function completeSession(
   }
 
   // Use provided sets or existing ones
-  const finalSets = command.sets ?? [session.set_1, session.set_2, session.set_3, session.set_4, session.set_5];
+  const finalSets = normalizeSets(
+    command.sets ?? [session.set_1, session.set_2, session.set_3, session.set_4, session.set_5]
+  );
 
   // Validate at least one rep > 0
   const hasPositiveRep = finalSets.some((set) => (set ?? 0) > 0);
@@ -49,7 +52,7 @@ export async function completeSession(
     });
   }
 
-  const totalReps = finalSets.reduce((sum, value) => sum + (value ?? 0), 0);
+  const totalReps = computeTotal(finalSets);
 
   // Update session
   const { data, error } = await supabase

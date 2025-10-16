@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 
-import type { AiWizardState } from "@/components/dashboard/types";
+import { hasNoQuota, type AiQuotaDTO, type AiWizardState } from "@/components/dashboard/types";
 
-export function useDashboardWizard(initialState: AiWizardState) {
-  const [wizardState, setWizardStateInternal] = useState<AiWizardState>(initialState);
+export function useDashboardWizard(initialState: AiWizardState, quota?: AiQuotaDTO) {
+  const [wizardState, setWizardStateInternal] = useState<AiWizardState>(() => ({ ...initialState, quota }));
 
   const setWizardState = useCallback((updater: AiWizardState | ((prev: AiWizardState) => AiWizardState)) => {
     setWizardStateInternal((prev) => {
@@ -16,12 +16,18 @@ export function useDashboardWizard(initialState: AiWizardState) {
   }, []);
 
   const openWizard = useCallback(() => {
-    setWizardState((prev) => ({ ...prev, step: "input" }));
+    setWizardState((prev) => {
+      if (hasNoQuota(prev.quota)) {
+        return { ...prev, step: "quota" };
+      }
+
+      return { ...prev, step: "input" };
+    });
   }, [setWizardState]);
 
   const closeWizard = useCallback(() => {
-    setWizardState(initialState);
-  }, [initialState, setWizardState]);
+    setWizardState({ ...initialState, quota });
+  }, [initialState, quota, setWizardState]);
 
   return { wizardState, setWizardState, openWizard, closeWizard };
 }

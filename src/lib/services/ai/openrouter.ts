@@ -1,13 +1,15 @@
 import type { AiStructuredResponseExisting, AiStructuredResponseNew, HistoricalSessionDTO } from "../../../types";
 
+export type { AiStructuredResponseExisting };
+
 type FetchImpl = typeof fetch;
 
-export interface JsonSchema<T> {
+export interface JsonSchema<TPayload = Record<string, unknown>> {
   readonly type: "json_schema";
   readonly json_schema: {
     readonly name: string;
     readonly strict: true;
-    readonly schema: Record<string, unknown>;
+    readonly schema: TPayload;
   };
 }
 
@@ -49,10 +51,10 @@ export class OpenRouterError extends Error {
   }
 }
 
-export interface CallArgs<TResponse> {
+export interface CallArgs {
   model?: string;
   messages: { role: "system" | "user"; content: string }[];
-  responseSchema: JsonSchema<TResponse>;
+  responseSchema: JsonSchema;
   params?: ModelParams;
   timeoutMs?: number;
 }
@@ -148,7 +150,7 @@ export class OpenRouterService {
           },
         },
       },
-    } as const satisfies JsonSchema<AiStructuredResponseNew>,
+    } as const satisfies JsonSchema,
     existingUser: {
       type: "json_schema",
       json_schema: {
@@ -170,7 +172,7 @@ export class OpenRouterService {
           },
         },
       },
-    } as const satisfies JsonSchema<AiStructuredResponseExisting>,
+    } as const satisfies JsonSchema,
   };
 
   constructor(options: OpenRouterServiceDependencies) {
@@ -304,7 +306,7 @@ export class OpenRouterService {
     return this._validateAndNormalizeExisting(response, sanitizedToday);
   }
 
-  async callOpenRouter<TResponse>(args: CallArgs<TResponse>): Promise<TResponse> {
+  async callOpenRouter<TResponse>(args: CallArgs): Promise<TResponse> {
     const mergedParams = { ...this.defaultParams, ...(args.params ?? {}) };
     const body: Record<string, unknown> = {
       model: args.model ?? this.defaultModel,
