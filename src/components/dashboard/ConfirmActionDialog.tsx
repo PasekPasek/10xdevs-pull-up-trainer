@@ -44,12 +44,12 @@ export function ConfirmActionDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
-            <Button type="button" variant="outline" disabled={isSubmitting}>
+            <Button type="button" variant="outline" disabled={isSubmitting} data-testid="confirm-dialog-cancel">
               {cancelLabel}
             </Button>
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button type="button" variant={variant} onClick={onConfirm} disabled={isSubmitting}>
+            <Button type="button" variant={variant} onClick={onConfirm} disabled={isSubmitting} data-testid="confirm-dialog-confirm">
               {confirmLabel}
             </Button>
           </AlertDialogAction>
