@@ -41,7 +41,7 @@ export function ActiveSessionCard({
   const { label, variant } = statusVariant[session.status];
 
   return (
-    <Card className="border-border/80">
+    <Card className="border-border/80" data-testid="active-session-card">
       <CardHeader className="gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -80,6 +80,7 @@ export function ActiveSessionCard({
               onClick={() => onStart(session.id)}
               disabled={isProcessing || session.status !== "planned"}
               className="flex items-center gap-2"
+              data-testid="session-start-button"
             >
               <Play className="size-4" />
               Start
@@ -92,6 +93,7 @@ export function ActiveSessionCard({
               onClick={() => onComplete(session)}
               disabled={isProcessing}
               className="flex items-center gap-2"
+              data-testid="session-complete-button"
             >
               <CheckCircle2 className="size-4" />
               Complete
@@ -131,6 +133,7 @@ export function ActiveSessionCard({
               onClick={() => onDelete(session)}
               disabled={isProcessing || !session.canDelete}
               className="flex items-center gap-2"
+              data-testid="session-delete-button"
             >
               <Trash2 className="size-4" />
               Delete

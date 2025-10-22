@@ -273,6 +273,7 @@ export function SessionForm() {
             {...register("sessionDateLocal")}
             aria-invalid={!!errors.sessionDateLocal}
             aria-describedby={errors.sessionDateLocal ? "sessionDateLocal-error" : undefined}
+            data-testid="session-date"
           />
           {errors.sessionDateLocal && (
             <p id="sessionDateLocal-error" className="text-sm text-destructive">
@@ -347,6 +348,7 @@ export function SessionForm() {
                   onChange={(e) => handleSetChange(index, e.target.value)}
                   className="text-center"
                   aria-label={`Set ${index + 1} reps`}
+                  data-testid={`session-set-${index}`}
                 />
               </div>
             ))}
@@ -428,6 +430,7 @@ export function SessionForm() {
           size="lg"
           className="w-full sm:w-auto"
           disabled={isBlocking || isSubmitting || isValidating}
+          data-testid="session-submit"
         >
           {isSubmitting ? (
             <>

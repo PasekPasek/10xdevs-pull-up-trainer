@@ -82,7 +82,7 @@ function LoginForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Controller
+              <Controller
               control={form.control}
               name="email"
               render={({ field }) => (
@@ -93,6 +93,7 @@ function LoginForm() {
                   autoComplete="email"
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.email)}
+                  data-testid="login-email"
                   {...field}
                   ref={(element) => {
                     field.ref(element);
@@ -110,7 +111,7 @@ function LoginForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Controller
+              <Controller
               control={form.control}
               name="password"
               render={({ field }) => (
@@ -120,6 +121,7 @@ function LoginForm() {
                   autoComplete="current-password"
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.password)}
+                  data-testid="login-password"
                   {...field}
                 />
               )}
@@ -151,7 +153,7 @@ function LoginForm() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isDisabled}>
+          <Button type="submit" className="w-full" disabled={isDisabled} data-testid="login-submit">
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
 

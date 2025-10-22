@@ -31,7 +31,7 @@ export function LastCompletedCard({ session, className }: LastCompletedCardProps
   const { label, variant } = statusVariant[session.status];
 
   return (
-    <Card className={cn("border-border/80", className)}>
+    <Card className={cn("border-border/80", className)} data-testid="last-completed-card">
       <CardHeader className="gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
