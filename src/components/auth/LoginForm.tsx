@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +14,6 @@ import { PasswordField } from "./PasswordField";
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
-  const [isHydrated, setIsHydrated] = useState(false);
   const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm({
@@ -27,11 +24,6 @@ function LoginForm() {
       rememberMe: true,
     },
   });
-
-  useEffect(() => {
-    // Mark as hydrated when component mounts on client
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -77,7 +69,7 @@ function LoginForm() {
     [redirectPath]
   );
 
-  const isDisabled = !isHydrated || isLoading;
+  const isDisabled = isLoading;
 
   return (
     <Card className="w-full max-w-md">
@@ -86,14 +78,7 @@ function LoginForm() {
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit(onSubmit)(e);
-        }}
-        action="#"
-        data-testid="login-form"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -108,7 +93,6 @@ function LoginForm() {
                   autoComplete="email"
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.email)}
-                  data-testid="email-input"
                   {...field}
                   ref={(element) => {
                     field.ref(element);
@@ -136,7 +120,6 @@ function LoginForm() {
                   autoComplete="current-password"
                   disabled={isDisabled}
                   aria-invalid={Boolean(form.formState.errors.password)}
-                  data-testid="password-input"
                   {...field}
                 />
               )}
@@ -158,7 +141,6 @@ function LoginForm() {
                   checked={field.value}
                   onCheckedChange={field.onChange}
                   disabled={isDisabled}
-                  data-testid="remember-me-checkbox"
                 />
               )}
             />
@@ -169,13 +151,13 @@ function LoginForm() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isDisabled} data-testid="login-submit">
+          <Button type="submit" className="w-full" disabled={isDisabled}>
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
 
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <a href="/register" className="font-medium text-primary hover:underline" data-testid="register-link">
+            <a href="/register" className="font-medium text-primary hover:underline">
               Sign up
             </a>
           </p>
