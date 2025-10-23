@@ -51,7 +51,7 @@ test.describe("History View", () => {
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(yesterdayDate);
     await manualSessionPage.fillAllSets([15, 12, 10, 8, 10]);
-    
+
     // Wait for form to react to date change
     await page.waitForTimeout(500);
 
@@ -60,7 +60,7 @@ test.describe("History View", () => {
     await statusSelect.waitFor({ state: "visible", timeout: 5000 });
     await statusSelect.click();
     await page.locator('[role="option"]:has-text("Completed")').click();
-    
+
     // Wait for status selection to be applied
     await page.waitForTimeout(300);
 
@@ -78,14 +78,14 @@ test.describe("History View", () => {
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(twoDaysAgoDate);
     await manualSessionPage.fillAllSets([12, 10, 9, 8, 8]);
-    
+
     // Wait for form to react to date change
     await page.waitForTimeout(500);
 
     await statusSelect.waitFor({ state: "visible", timeout: 5000 });
     await statusSelect.click();
     await page.locator('[role="option"]:has-text("Completed")').click();
-    
+
     // Wait for status selection to be applied
     await page.waitForTimeout(300);
 
@@ -129,7 +129,7 @@ test.describe("History View", () => {
       await manualSessionPage.goto();
       await manualSessionPage.fillDate(pastDateStr);
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
-      
+
       // Wait for form to react to date change
       await page.waitForTimeout(500);
 
@@ -137,7 +137,7 @@ test.describe("History View", () => {
       await statusSelect.waitFor({ state: "visible", timeout: 5000 });
       await statusSelect.click();
       await page.locator('[role="option"]:has-text("Completed")').click();
-      
+
       // Wait for status selection to be applied
       await page.waitForTimeout(300);
 
@@ -190,7 +190,7 @@ test.describe("History View", () => {
       await manualSessionPage.goto();
       await manualSessionPage.fillDate(dateStr);
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
-      
+
       // Wait for form to react to date change
       await page.waitForTimeout(500);
 
