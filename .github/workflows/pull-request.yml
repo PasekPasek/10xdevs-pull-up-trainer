@@ -1,0 +1,199 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test -- --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 7
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    environment: integration
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-report
+          path: playwright-report/
+          retention-days: 7
+
+  status-comment:
+    name: Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
+    if: always()
+    steps:
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v5
+        with:
+          name: unit-test-coverage
+          path: coverage/
+        continue-on-error: true
+
+      - name: Download E2E test report
+        uses: actions/download-artifact@v5
+        with:
+          name: e2e-test-report
+          path: playwright-report/
+        continue-on-error: true
+
+      - name: Generate status comment
+        id: generate-comment
+        run: |
+          # Initialize variables
+          LINT_STATUS="${{ needs.lint.result }}"
+          UNIT_STATUS="${{ needs.unit-test.result }}"
+          E2E_STATUS="${{ needs.e2e-test.result }}"
+          
+          # Function to get status emoji
+          get_status_emoji() {
+            case "$1" in
+              success) echo "✅" ;;
+              failure) echo "❌" ;;
+              cancelled) echo "🚫" ;;
+              skipped) echo "⏭️" ;;
+              *) echo "❓" ;;
+            esac
+          }
+          
+          # Build comment header
+          COMMENT="## 🔍 Pull Request CI Status\n\n"
+          COMMENT+="| Job | Status |\n"
+          COMMENT+="| --- | ------ |\n"
+          COMMENT+="| Lint | $(get_status_emoji $LINT_STATUS) $LINT_STATUS |\n"
+          COMMENT+="| Unit Tests | $(get_status_emoji $UNIT_STATUS) $UNIT_STATUS |\n"
+          COMMENT+="| E2E Tests | $(get_status_emoji $E2E_STATUS) $E2E_STATUS |\n\n"
+          
+          # Add coverage information if available
+          if [ -f "coverage/coverage-summary.json" ]; then
+            COMMENT+="### 📊 Unit Test Coverage\n\n"
+            
+            # Parse coverage using jq if available, otherwise use basic grep/sed
+            if command -v jq &> /dev/null; then
+              LINES=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
+              STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)
+              FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)
+              BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)
+              
+              COMMENT+="| Metric | Coverage |\n"
+              COMMENT+="| ------ | -------- |\n"
+              COMMENT+="| Lines | ${LINES}% |\n"
+              COMMENT+="| Statements | ${STATEMENTS}% |\n"
+              COMMENT+="| Functions | ${FUNCTIONS}% |\n"
+              COMMENT+="| Branches | ${BRANCHES}% |\n\n"
+            else
+              COMMENT+="Coverage data available but jq not found for parsing.\n\n"
+            fi
+          else
+            COMMENT+="### 📊 Unit Test Coverage\n\n"
+            COMMENT+="Coverage data not available.\n\n"
+          fi
+          
+          # Add E2E report information
+          if [ -d "playwright-report" ]; then
+            COMMENT+="### 🎭 E2E Test Report\n\n"
+            COMMENT+="Playwright report artifact uploaded. Download from the Actions run to view the full report.\n\n"
+          fi
+          
+          # Add overall status
+          if [ "$LINT_STATUS" == "success" ] && [ "$UNIT_STATUS" == "success" ] && [ "$E2E_STATUS" == "success" ]; then
+            COMMENT+="---\n\n"
+            COMMENT+="### ✨ All checks passed! This PR is ready for review.\n"
+          else
+            COMMENT+="---\n\n"
+            COMMENT+="### ⚠️ Some checks failed. Please review the logs above.\n"
+          fi
+          
+          # Save comment to file (for multi-line output)
+          echo -e "$COMMENT" > comment.md
+          
+          # Also set as output using heredoc for GitHub Actions
+          {
+            echo 'COMMENT<<EOF'
+            echo -e "$COMMENT"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Post comment to PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-ci-status
+          path: comment.md
+
