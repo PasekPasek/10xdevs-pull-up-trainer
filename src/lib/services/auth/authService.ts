@@ -18,12 +18,6 @@ interface AuthResult {
     appMetadata: Record<string, unknown> | null;
     createdAt: string;
   };
-  session: {
-    accessToken: string;
-    refreshToken: string | null;
-    expiresIn: number;
-    expiresAt: string | null;
-  };
 }
 
 export class AuthService {
@@ -80,19 +74,13 @@ export class AuthService {
     }
   }
 
-  private mapAuthResult(user: User, session: Session, fallbackEmail: string): AuthResult {
+  private mapAuthResult(user: User, _session: Session, fallbackEmail: string): AuthResult {
     return {
       user: {
         id: user.id,
         email: user.email ?? fallbackEmail,
         appMetadata: user.app_metadata ?? null,
         createdAt: user.created_at,
-      },
-      session: {
-        accessToken: session.access_token,
-        refreshToken: session.refresh_token ?? null,
-        expiresIn: session.expires_in,
-        expiresAt: session.expires_at ? new Date(session.expires_at).toISOString() : null,
       },
     };
   }

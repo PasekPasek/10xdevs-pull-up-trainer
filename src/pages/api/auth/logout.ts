@@ -1,12 +1,11 @@
 import type { APIRoute } from "astro";
 
 import { createAuthService } from "@/lib/services/auth/authService";
-import { createSessionManager } from "@/lib/services/auth/sessionManager";
 import { buildErrorResponse, createHttpError } from "@/lib/utils/httpError";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ locals, cookies }) => {
+export const POST: APIRoute = async ({ locals }) => {
   const requestId = crypto.randomUUID();
 
   try {
@@ -21,11 +20,12 @@ export const POST: APIRoute = async ({ locals, cookies }) => {
       });
     }
 
-    const sessionManager = createSessionManager(cookies);
     const authService = createAuthService(supabase);
 
     await authService.logout();
-    sessionManager.clearSession();
+
+    // Supabase SSR automatically clears cookies via setAll callback in createSupabaseServerInstance
+    // No manual session management needed
 
     return new Response(null, {
       status: 204,
