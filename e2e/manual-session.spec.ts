@@ -41,8 +41,23 @@ test.describe("Manual Session Creation", () => {
     await manualSessionPage.fillDate(getTodayLocalDate());
     await manualSessionPage.fillAllSets([10, 12, 10, 10, 11]);
 
-    // Wait for total to update
-    await page.waitForTimeout(500);
+    // Wait for React Hook Form to update by checking if the last set input has the expected value
+    await expect(page.getByTestId("session-set-4")).toHaveValue("11");
+
+    // Wait for total to calculate
+    await page.waitForFunction(
+      () => {
+        const totalElement = document.evaluate(
+          "//span[contains(text(), 'Total Reps')]/ancestor::div//span[@class='text-2xl font-bold']",
+          document,
+          null,
+          XPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        ).singleNodeValue;
+        return totalElement && totalElement.textContent !== "0";
+      },
+      { timeout: 3000 }
+    );
 
     // Verify total reps calculation
     const totalReps = await manualSessionPage.getTotalReps();

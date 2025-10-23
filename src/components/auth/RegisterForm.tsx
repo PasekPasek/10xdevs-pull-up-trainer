@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { registerFormSchema, type RegisterFormValues } from "@/lib/validation/ui/registerForm.schema";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { setFormErrorsFromApi, isConflictError, getErrorMessage } from "@/lib/utils/apiErrors";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +17,6 @@ import { PasswordField } from "./PasswordField";
 import { cn } from "@/lib/utils";
 
 function RegisterForm() {
-  const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
@@ -31,6 +32,12 @@ function RegisterForm() {
   const password = form.watch("password");
   const passwordStrength = usePasswordStrength(password);
 
+  const { registerMutation } = useAuthMutations({
+    onRegisterSuccess: () => {
+      window.location.href = redirectPath;
+    },
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get("redirect");
@@ -45,62 +52,33 @@ function RegisterForm() {
   }, []);
 
   const onSubmit = useCallback(
-    async (values: RegisterFormValues) => {
-      setIsLoading(true);
-
-      try {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        });
-
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => undefined);
-
-          if (response.status === 409) {
-            toast.error(errorBody?.error?.message ?? "An account with this email already exists");
-            form.setError("email", {
-              message: "An account with this email already exists",
-            });
+    (values: RegisterFormValues) => {
+      registerMutation.mutate(values, {
+        onError: (error) => {
+          // Handle conflict error (409 - email already exists)
+          if (isConflictError(error)) {
+            const message = getErrorMessage(error, "An account with this email already exists");
+            toast.error(message);
+            form.setError("email", { message: "An account with this email already exists" });
             return;
           }
 
-          if (response.status === 400 && errorBody?.error?.details) {
-            const details = errorBody.error.details as Record<string, string[]>;
-            Object.entries(details).forEach(([field, messages]) => {
-              const message = messages?.[0];
-              if (!message) {
-                return;
-              }
-
-              if (field in form.formState.errors === false) {
-                form.setError(field as keyof RegisterFormValues, { message });
-              }
-            });
-            toast.error(errorBody.error.message ?? "Invalid input data");
+          // Handle validation errors (400 - field-level errors)
+          const hasFieldErrors = setFormErrorsFromApi(error, form.setError);
+          if (hasFieldErrors) {
+            toast.error("Invalid input data. Please check the form.");
             return;
           }
 
-          toast.error(errorBody?.error?.message ?? "Failed to create account. Please try again.");
-          return;
-        }
-
-        toast.success("Account created successfully!");
-        window.location.href = redirectPath;
-      } catch (error) {
-        globalThis.reportError?.(error);
-        toast.error("An error occurred during registration. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
+          // Generic error fallback
+          toast.error(getErrorMessage(error, "Failed to create account. Please try again."));
+        },
+      });
     },
-    [form, redirectPath]
+    [registerMutation, form]
   );
 
-  const isDisabled = isLoading;
+  const isDisabled = form.formState.isSubmitting || registerMutation.isPending;
 
   const strengthColors = {
     weak: "text-red-600 dark:text-red-500",
@@ -221,7 +199,7 @@ function RegisterForm() {
 
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={isDisabled}>
-            {isLoading ? "Creating account..." : "Create account"}
+            {registerMutation.isPending ? "Creating account..." : "Create account"}
           </Button>
 
           <p className="text-sm text-center text-muted-foreground">

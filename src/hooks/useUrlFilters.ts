@@ -32,7 +32,7 @@ export function useUrlFilters<T>({
     const urlFilters = serializer.deserialize(searchParams);
 
     // Check if URL has any filters
-    const hasUrlFilters = (Object.keys(urlFilters) as Array<keyof T>).some((key) => {
+    const hasUrlFilters = (Object.keys(urlFilters) as (keyof T)[]).some((key) => {
       const value = urlFilters[key];
       const defaultVal = defaultValue[key];
       return value !== defaultVal && value !== undefined;

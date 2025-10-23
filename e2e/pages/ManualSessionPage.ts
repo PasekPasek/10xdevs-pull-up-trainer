@@ -35,6 +35,8 @@ export class ManualSessionPage {
   async fillSet(index: number, reps: number) {
     const setInput = this.page.getByTestId(`session-set-${index}`);
     await setInput.fill(String(reps));
+    // Trigger blur to ensure React Hook Form updates
+    await setInput.blur();
   }
 
   async fillAllSets(reps: number[]) {
