@@ -62,6 +62,13 @@ test.describe("History View", () => {
       await page.locator('[role="option"]:has-text("Completed")').click();
     }
 
+    // Check for and dismiss any validation warnings
+    let ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
+    if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
+      await ignoreRestWarningCheckbox.check();
+      await page.waitForTimeout(500);
+    }
+
     await manualSessionPage.clickSubmit();
     await manualSessionPage.waitForRedirect();
 
@@ -74,6 +81,13 @@ test.describe("History View", () => {
     if (await statusSelect.isVisible()) {
       await statusSelect.click();
       await page.locator('[role="option"]:has-text("Completed")').click();
+    }
+
+    // Check for and dismiss any validation warnings
+    ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
+    if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
+      await ignoreRestWarningCheckbox.check();
+      await page.waitForTimeout(500);
     }
 
     await manualSessionPage.clickSubmit();
@@ -119,6 +133,13 @@ test.describe("History View", () => {
         await page.locator('[role="option"]:has-text("Completed")').click();
       }
 
+      // Check for and dismiss any validation warnings
+      const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
+      if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
+        await ignoreRestWarningCheckbox.check();
+        await page.waitForTimeout(500);
+      }
+
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
     }
@@ -147,10 +168,8 @@ test.describe("History View", () => {
     expect(sessionCount).toBe(3);
   });
 
-  // Pagination test skipped for basic coverage - creating 11+ sessions causes UI instability
-  // and is time-consuming. The core history functionality is covered by the other tests.
-  test.skip("should paginate sessions when more than 10 exist", async ({ page }) => {
-    test.setTimeout(60000);
+  test("should paginate sessions when more than 10 exist", async ({ page }) => {
+    test.setTimeout(90000); // Increase timeout for creating many sessions
 
     const manualSessionPage = new ManualSessionPage(page);
 
@@ -164,37 +183,68 @@ test.describe("History View", () => {
       await manualSessionPage.goto();
       await manualSessionPage.fillDate(dateStr);
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(2000); // Longer wait for form validation
 
+      // For past dates (i > 0), set status to completed
       if (i > 0) {
         const statusSelect = page.locator("#status");
-        if (await statusSelect.isVisible()) {
-          await statusSelect.click();
-          await page.locator('[role="option"]:has-text("Completed")').click();
-        }
+
+        // Wait for status select to be visible
+        await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+
+        // Click status select with retry logic
+        await statusSelect.click();
+
+        // Wait for dropdown to fully render
+        await page.waitForTimeout(300);
+
+        // Click the Completed option with better selector and timeout
+        const completedOption = page.locator('[role="option"]').filter({ hasText: "Completed" });
+        await completedOption.waitFor({ state: "visible", timeout: 5000 });
+
+        // Use force click to avoid "element is not stable" errors
+        await completedOption.click({ force: true });
+
+        // Wait for selection to be applied
+        await page.waitForTimeout(300);
+      }
+
+      // Check for and dismiss any validation warnings
+      const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
+      if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
+        await ignoreRestWarningCheckbox.check();
+        await page.waitForTimeout(500);
       }
 
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
-      await page.waitForTimeout(500);
+
+      // Add delay between session creations to avoid overwhelming the system
+      await page.waitForTimeout(800);
     }
 
+    // Navigate to history page
     const historyPage = new HistoryPage(page);
     await historyPage.goto();
     await historyPage.waitForLoad();
 
+    // Verify 10 sessions visible on page 1
     let sessionCount = await historyPage.getSessionCardsCount();
     expect(sessionCount).toBe(10);
 
+    // Verify page indicator shows "Page 1 of 2"
     let pageText = await historyPage.getCurrentPageText();
     expect(pageText).toContain("1");
     expect(pageText).toContain("2");
 
+    // Go to next page
     await historyPage.goToNextPage();
 
+    // Verify 1 session visible on page 2
     sessionCount = await historyPage.getSessionCardsCount();
     expect(sessionCount).toBe(1);
 
+    // Verify page indicator shows "Page 2 of 2"
     pageText = await historyPage.getCurrentPageText();
     expect(pageText).toContain("2");
   });
