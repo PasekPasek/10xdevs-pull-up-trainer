@@ -34,12 +34,10 @@ test.describe("History View", () => {
   test("should display list of sessions", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
 
-    // Create 3 sessions with different dates
+    // Create 3 sessions with different dates using UTC to avoid timezone issues
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const twoDaysAgo = new Date(today);
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const yesterday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 1));
+    const twoDaysAgo = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 2));
 
     const todayDate = today.toISOString().split("T")[0];
     const yesterdayDate = yesterday.toISOString().split("T")[0];
@@ -53,14 +51,18 @@ test.describe("History View", () => {
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(yesterdayDate);
     await manualSessionPage.fillAllSets([15, 12, 10, 8, 10]);
-    await page.waitForTimeout(1500);
+    
+    // Wait for form to react to date change
+    await page.waitForTimeout(500);
 
-    // For past dates, select completed status if status field is visible
+    // For past dates, select completed status
     const statusSelect = page.locator("#status");
-    if (await statusSelect.isVisible()) {
-      await statusSelect.click();
-      await page.locator('[role="option"]:has-text("Completed")').click();
-    }
+    await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+    await statusSelect.click();
+    await page.locator('[role="option"]:has-text("Completed")').click();
+    
+    // Wait for status selection to be applied
+    await page.waitForTimeout(300);
 
     // Check for and dismiss any validation warnings
     let ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
@@ -76,12 +78,16 @@ test.describe("History View", () => {
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(twoDaysAgoDate);
     await manualSessionPage.fillAllSets([12, 10, 9, 8, 8]);
-    await page.waitForTimeout(1500);
+    
+    // Wait for form to react to date change
+    await page.waitForTimeout(500);
 
-    if (await statusSelect.isVisible()) {
-      await statusSelect.click();
-      await page.locator('[role="option"]:has-text("Completed")').click();
-    }
+    await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+    await statusSelect.click();
+    await page.locator('[role="option"]:has-text("Completed")').click();
+    
+    // Wait for status selection to be applied
+    await page.waitForTimeout(300);
 
     // Check for and dismiss any validation warnings
     ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
@@ -109,8 +115,7 @@ test.describe("History View", () => {
     const today = new Date();
 
     // Create 1 planned session
-    const futureDate = new Date(today);
-    futureDate.setDate(futureDate.getDate() + 3);
+    const futureDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 3));
     const futureDateStr = futureDate.toISOString().split("T")[0];
 
     await manualSessionPage.goto();
@@ -118,20 +123,23 @@ test.describe("History View", () => {
 
     // Create 2 completed sessions (past dates with completed status)
     for (let i = 1; i <= 2; i++) {
-      const pastDate = new Date(today);
-      pastDate.setDate(pastDate.getDate() - i);
+      const pastDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i));
       const pastDateStr = pastDate.toISOString().split("T")[0];
 
       await manualSessionPage.goto();
       await manualSessionPage.fillDate(pastDateStr);
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
-      await page.waitForTimeout(1500);
+      
+      // Wait for form to react to date change
+      await page.waitForTimeout(500);
 
       const statusSelect = page.locator("#status");
-      if (await statusSelect.isVisible()) {
-        await statusSelect.click();
-        await page.locator('[role="option"]:has-text("Completed")').click();
-      }
+      await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+      await statusSelect.click();
+      await page.locator('[role="option"]:has-text("Completed")').click();
+      
+      // Wait for status selection to be applied
+      await page.waitForTimeout(300);
 
       // Check for and dismiss any validation warnings
       const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
@@ -173,17 +181,18 @@ test.describe("History View", () => {
 
     const manualSessionPage = new ManualSessionPage(page);
 
-    // Create 11 sessions with different dates
+    // Create 11 sessions with different dates using UTC
     const today = new Date();
     for (let i = 0; i < 11; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
+      const date = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i));
       const dateStr = date.toISOString().split("T")[0];
 
       await manualSessionPage.goto();
       await manualSessionPage.fillDate(dateStr);
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
-      await page.waitForTimeout(2000); // Longer wait for form validation
+      
+      // Wait for form to react to date change
+      await page.waitForTimeout(500);
 
       // For past dates (i > 0), set status to completed
       if (i > 0) {
@@ -192,17 +201,15 @@ test.describe("History View", () => {
         // Wait for status select to be visible
         await statusSelect.waitFor({ state: "visible", timeout: 5000 });
 
-        // Click status select with retry logic
+        // Click status select
         await statusSelect.click();
 
         // Wait for dropdown to fully render
         await page.waitForTimeout(300);
 
-        // Click the Completed option with better selector and timeout
+        // Click the Completed option
         const completedOption = page.locator('[role="option"]').filter({ hasText: "Completed" });
         await completedOption.waitFor({ state: "visible", timeout: 5000 });
-
-        // Use force click to avoid "element is not stable" errors
         await completedOption.click({ force: true });
 
         // Wait for selection to be applied
