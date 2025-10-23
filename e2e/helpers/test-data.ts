@@ -1,8 +1,8 @@
 // Test user credentials from environment
 export const TEST_USER = {
-  id: process.env.E2E_USERNAME_ID!,
-  email: process.env.E2E_USERNAME!,
-  password: process.env.E2E_PASSWORD!,
+  id: process.env.E2E_USERNAME_ID ?? "",
+  email: process.env.E2E_USERNAME ?? "",
+  password: process.env.E2E_PASSWORD ?? "",
 };
 
 // Helper to generate test session data

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 function RegisterForm() {
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm({
@@ -34,9 +35,15 @@ function RegisterForm() {
 
   const { registerMutation } = useAuthMutations({
     onRegisterSuccess: () => {
-      window.location.href = redirectPath;
+      setShouldRedirect(true);
     },
   });
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      window.location.href = redirectPath;
+    }
+  }, [shouldRedirect, redirectPath]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

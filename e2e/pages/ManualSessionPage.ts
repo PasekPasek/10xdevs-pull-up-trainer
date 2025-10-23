@@ -87,7 +87,9 @@ export class ManualSessionPage {
     // Wait for any loading indicators to disappear
     const loadingIndicator = this.page.locator('[role="status"]');
     if (await loadingIndicator.isVisible().catch(() => false)) {
-      await loadingIndicator.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
+      await loadingIndicator.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {
+        // Ignore timeout - indicator may have already disappeared
+      });
     }
 
     if (startNow) {
