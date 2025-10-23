@@ -148,15 +148,7 @@ test.describe("History View", () => {
         await page.waitForTimeout(500);
       }
 
-      // Wait for button to be enabled before clicking
-      await page.waitForFunction(
-        () => {
-          const button = document.querySelector('[data-testid="session-submit"]');
-          return button && !button.hasAttribute("disabled");
-        },
-        { timeout: 5000 }
-      );
-
+      // clickSubmit already waits for the button to be enabled
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
     }
@@ -186,13 +178,14 @@ test.describe("History View", () => {
   });
 
   test("should paginate sessions when more than 10 exist", async ({ page }) => {
-    test.setTimeout(90000); // Increase timeout for creating many sessions
+    test.setTimeout(120000); // Increase timeout for creating many sessions in CI
 
     const manualSessionPage = new ManualSessionPage(page);
 
-    // Create 11 sessions with different dates using UTC
+    // Create 11 HISTORICAL sessions (all past dates to avoid blocking active session)
     const today = new Date();
-    for (let i = 0; i < 11; i++) {
+    for (let i = 1; i <= 11; i++) {
+      // Start from 1 day ago, not today, to avoid creating active sessions
       const date = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i));
       const dateStr = date.toISOString().split("T")[0];
 
@@ -201,51 +194,41 @@ test.describe("History View", () => {
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
 
       // Wait for form to react to date change
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(600);
 
-      // For past dates (i > 0), set status to completed
-      if (i > 0) {
-        const statusSelect = page.locator("#status");
+      // All sessions are past dates, so set status to completed
+      const statusSelect = page.locator("#status");
 
-        // Wait for status select to be visible
-        await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+      // Wait for status select to be visible
+      await statusSelect.waitFor({ state: "visible", timeout: 5000 });
 
-        // Click status select
-        await statusSelect.click();
+      // Click status select
+      await statusSelect.click();
 
-        // Wait for dropdown to fully render
-        await page.waitForTimeout(300);
+      // Wait for dropdown to fully render
+      await page.waitForTimeout(200);
 
-        // Click the Completed option
-        const completedOption = page.locator('[role="option"]').filter({ hasText: "Completed" });
-        await completedOption.waitFor({ state: "visible", timeout: 5000 });
-        await completedOption.click({ force: true });
+      // Click the Completed option
+      const completedOption = page.locator('[role="option"]').filter({ hasText: "Completed" });
+      await completedOption.waitFor({ state: "visible", timeout: 5000 });
+      await completedOption.click({ force: true });
 
-        // Wait for selection to be applied
-        await page.waitForTimeout(500);
-      }
+      // Wait for selection to be applied
+      await page.waitForTimeout(300);
 
       // Check for and dismiss any validation warnings
       const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
       if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
         await ignoreRestWarningCheckbox.check();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(400);
       }
 
-      // Wait for button to be enabled before clicking
-      await page.waitForFunction(
-        () => {
-          const button = document.querySelector('[data-testid="session-submit"]');
-          return button && !button.hasAttribute("disabled");
-        },
-        { timeout: 5000 }
-      );
-
+      // clickSubmit already waits for the button to be enabled
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
 
-      // Add delay between session creations to avoid overwhelming the system
-      await page.waitForTimeout(800);
+      // Add small delay between session creations
+      await page.waitForTimeout(500);
     }
 
     // Navigate to history page
