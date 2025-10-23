@@ -78,20 +78,32 @@ test.describe("Dashboard", () => {
     const manualSessionPage = new ManualSessionPage(page);
     await manualSessionPage.goto();
 
-    // Get yesterday's date
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Get yesterday's date using UTC to avoid timezone issues
+    const today = new Date();
+    const yesterday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 1));
     const yesterdayDate = yesterday.toISOString().split("T")[0];
 
     await manualSessionPage.fillDate(yesterdayDate);
     await manualSessionPage.fillAllSets([10, 12, 10, 10, 11]);
 
+    // Wait for form to react to date change and show status selector
+    await page.waitForTimeout(500);
+
     // For past dates, we need to select status as completed
     // The form should automatically show status selector for past dates
     const statusSelect = page.locator("#status");
-    if (await statusSelect.isVisible()) {
-      await statusSelect.click();
-      await page.locator('[role="option"]:has-text("Completed")').click();
+    await statusSelect.waitFor({ state: "visible", timeout: 5000 });
+    await statusSelect.click();
+    await page.locator('[role="option"]:has-text("Completed")').click();
+
+    // Wait for status selection to be applied
+    await page.waitForTimeout(300);
+
+    // Check for and dismiss any validation warnings
+    const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
+    if (await ignoreRestWarningCheckbox.isVisible().catch(() => false)) {
+      await ignoreRestWarningCheckbox.check();
+      await page.waitForTimeout(500);
     }
 
     await manualSessionPage.clickSubmit();

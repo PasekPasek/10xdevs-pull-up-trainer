@@ -13,6 +13,7 @@ import { PasswordField } from "./PasswordField";
 
 function LoginForm() {
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm({
@@ -26,9 +27,15 @@ function LoginForm() {
 
   const { loginMutation } = useAuthMutations({
     onLoginSuccess: () => {
-      window.location.href = redirectPath;
+      setShouldRedirect(true);
     },
   });
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      window.location.href = redirectPath;
+    }
+  }, [shouldRedirect, redirectPath]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

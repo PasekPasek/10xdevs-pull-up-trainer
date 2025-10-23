@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface FilterSerializer<T> {
   serialize: (filters: T) => URLSearchParams;
@@ -26,15 +26,25 @@ export function useUrlFilters<T>({
   const [mounted, setMounted] = useState(false);
   const [filters, setFiltersInternal] = useState<T>(defaultValue);
 
+  // Store serializer and defaultValue in refs to avoid dependency issues
+  const serializerRef = useRef(serializer);
+  const defaultValueRef = useRef(defaultValue);
+
+  // Update refs when props change
+  useEffect(() => {
+    serializerRef.current = serializer;
+    defaultValueRef.current = defaultValue;
+  }, [serializer, defaultValue]);
+
   // Initialize filters from URL or localStorage on mount
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const urlFilters = serializer.deserialize(searchParams);
+    const urlFilters = serializerRef.current.deserialize(searchParams);
 
     // Check if URL has any filters
     const hasUrlFilters = (Object.keys(urlFilters) as (keyof T)[]).some((key) => {
       const value = urlFilters[key];
-      const defaultVal = defaultValue[key];
+      const defaultVal = defaultValueRef.current[key];
       return value !== defaultVal && value !== undefined;
     });
 
@@ -54,14 +64,13 @@ export function useUrlFilters<T>({
     }
 
     setMounted(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storageKey]);
 
   // Sync filters to URL and localStorage whenever they change
   useEffect(() => {
     if (!mounted) return;
 
-    const params = serializer.serialize(filters);
+    const params = serializerRef.current.serialize(filters);
     const queryString = params.toString();
     const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
 
@@ -73,7 +82,6 @@ export function useUrlFilters<T>({
     } catch (error) {
       globalThis.reportError?.(error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, mounted, storageKey]);
 
   const setFilters = useCallback((newFilters: T) => {

@@ -52,11 +52,7 @@ export function PaginationControl({ currentPage, totalPages, onPageChange }: Pag
         <span className="hidden sm:inline">Previous</span>
       </Button>
 
-      <div
-        className="flex items-center gap-2 text-sm font-medium"
-        aria-current="page"
-        data-testid="pagination-info"
-      >
+      <div className="flex items-center gap-2 text-sm font-medium" aria-current="page" data-testid="pagination-info">
         <span className="text-muted-foreground">Page</span>
         <span className="font-semibold">{currentPage}</span>
         <span className="text-muted-foreground">of</span>

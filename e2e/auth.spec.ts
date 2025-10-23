@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TEST_USER } from "./helpers/test-data";
-import { login, logout } from "./helpers/auth";
+import { login } from "./helpers/auth";
 
 test.describe("Authentication", () => {
   test("should login with valid credentials", async ({ page }) => {
@@ -28,7 +28,7 @@ test.describe("Authentication", () => {
         try {
           const body = await response.json();
           console.log("Login API response body:", JSON.stringify(body, null, 2));
-        } catch (e) {
+        } catch {
           console.log("Could not parse response body");
         }
       }
