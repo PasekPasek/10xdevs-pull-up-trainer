@@ -131,7 +131,7 @@ test.describe("History View", () => {
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
 
       // Wait for form to react to date change
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(800);
 
       const statusSelect = page.locator("#status");
       await statusSelect.waitFor({ state: "visible", timeout: 5000 });
@@ -139,7 +139,7 @@ test.describe("History View", () => {
       await page.locator('[role="option"]:has-text("Completed")').click();
 
       // Wait for status selection to be applied
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       // Check for and dismiss any validation warnings
       const ignoreRestWarningCheckbox = page.locator('input[type="checkbox"]#ignoreRestWarning');
@@ -147,6 +147,15 @@ test.describe("History View", () => {
         await ignoreRestWarningCheckbox.check();
         await page.waitForTimeout(500);
       }
+
+      // Wait for button to be enabled before clicking
+      await page.waitForFunction(
+        () => {
+          const button = document.querySelector('[data-testid="session-submit"]');
+          return button && !button.hasAttribute("disabled");
+        },
+        { timeout: 5000 }
+      );
 
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
@@ -192,7 +201,7 @@ test.describe("History View", () => {
       await manualSessionPage.fillAllSets([10, 10, 10, 10, 10]);
 
       // Wait for form to react to date change
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(800);
 
       // For past dates (i > 0), set status to completed
       if (i > 0) {
@@ -213,7 +222,7 @@ test.describe("History View", () => {
         await completedOption.click({ force: true });
 
         // Wait for selection to be applied
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(500);
       }
 
       // Check for and dismiss any validation warnings
@@ -222,6 +231,15 @@ test.describe("History View", () => {
         await ignoreRestWarningCheckbox.check();
         await page.waitForTimeout(500);
       }
+
+      // Wait for button to be enabled before clicking
+      await page.waitForFunction(
+        () => {
+          const button = document.querySelector('[data-testid="session-submit"]');
+          return button && !button.hasAttribute("disabled");
+        },
+        { timeout: 5000 }
+      );
 
       await manualSessionPage.clickSubmit();
       await manualSessionPage.waitForRedirect();
