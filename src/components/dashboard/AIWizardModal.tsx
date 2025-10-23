@@ -96,7 +96,7 @@ export function AIWizardModal({ quota, onSuccess }: AIWizardModalProps) {
 
   return (
     <Dialog open={true} onOpenChange={(open) => (open ? openWizard() : closeWizard())}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)]">
         {step === "input" ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <DialogHeader>

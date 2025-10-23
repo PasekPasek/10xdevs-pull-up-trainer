@@ -224,7 +224,8 @@ export function SessionForm() {
             )}
           />
           {form.formState.errors.sessionDateLocal && (
-            <p id="sessionDateLocal-error" className="text-sm text-destructive">
+            <p id="sessionDateLocal-error" className="text-sm font-medium text-destructive flex items-center gap-1">
+              <span aria-hidden="true">⚠</span>
               {form.formState.errors.sessionDateLocal.message}
             </p>
           )}
@@ -249,7 +250,10 @@ export function SessionForm() {
               </SelectContent>
             </Select>
             {form.formState.errors.status && (
-              <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>
+              <p className="text-sm font-medium text-destructive flex items-center gap-1">
+                <span aria-hidden="true">⚠</span>
+                {form.formState.errors.status.message}
+              </p>
             )}
           </div>
         )}
@@ -278,7 +282,10 @@ export function SessionForm() {
           </div>
         )}
         {form.formState.errors.startNow && (
-          <p className="text-sm text-destructive">{form.formState.errors.startNow.message}</p>
+          <p className="text-sm font-medium text-destructive flex items-center gap-1">
+            <span aria-hidden="true">⚠</span>
+            {form.formState.errors.startNow.message}
+          </p>
         )}
 
         {/* Sets Grid */}
@@ -328,7 +335,8 @@ export function SessionForm() {
             )}
           />
           {form.formState.errors.notes && (
-            <p id="notes-error" className="text-sm text-destructive">
+            <p id="notes-error" className="text-sm font-medium text-destructive flex items-center gap-1">
+              <span aria-hidden="true">⚠</span>
               {form.formState.errors.notes.message}
             </p>
           )}
@@ -336,7 +344,7 @@ export function SessionForm() {
       </div>
 
       {/* Submit Button (sticky on mobile) */}
-      <div className="sticky bottom-0 pt-4 pb-6 bg-background border-t -mx-6 px-6 sm:static sm:border-0 sm:mx-0 sm:px-0">
+      <div className="sticky bottom-0 pt-4 pb-safe pb-6 bg-background/95 backdrop-blur-sm border-t shadow-lg -mx-6 px-6 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:bg-transparent sm:backdrop-blur-none sm:shadow-none">
         <Button
           type="submit"
           size="lg"

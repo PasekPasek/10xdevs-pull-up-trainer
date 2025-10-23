@@ -19,11 +19,11 @@ export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled }: 
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button
           onClick={onCreateAi}
           disabled={aiDisabled}
-          className="flex-1 min-w-[220px] justify-center gap-2"
+          className="flex-1 justify-center gap-2"
           data-testid="create-ai-button"
         >
           <Sparkles className="size-4" />
@@ -33,7 +33,7 @@ export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled }: 
           variant="outline"
           onClick={onCreateManual}
           disabled={manualDisabled}
-          className="flex-1 min-w-[220px] justify-center gap-2"
+          className="flex-1 justify-center gap-2"
           data-testid="create-manual-button"
         >
           <PlusIcon className="size-4" />

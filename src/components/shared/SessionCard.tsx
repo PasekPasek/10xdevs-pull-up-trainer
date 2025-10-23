@@ -55,7 +55,7 @@ export function SessionCard({ session, variant = "full", className }: SessionCar
             <Dumbbell className="h-4 w-4" aria-hidden="true" />
             <span>Sets</span>
           </div>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-2">
             {session.sets.map((set, idx) => (
               <div key={idx} className="rounded-md border bg-muted/50 p-2 text-center text-sm font-medium">
                 {set ?? "-"}

@@ -84,7 +84,8 @@ function LoginForm() {
               )}
             />
             {form.formState.errors.email ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-sm font-medium text-destructive flex items-center gap-1" role="alert">
+                <span aria-hidden="true">⚠</span>
                 {form.formState.errors.email.message}
               </p>
             ) : null}
@@ -108,7 +109,8 @@ function LoginForm() {
               )}
             />
             {form.formState.errors.password ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-sm font-medium text-destructive flex items-center gap-1" role="alert">
+                <span aria-hidden="true">⚠</span>
                 {form.formState.errors.password.message}
               </p>
             ) : null}

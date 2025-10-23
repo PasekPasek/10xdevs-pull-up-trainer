@@ -115,7 +115,7 @@ export function HeaderNav({ currentPath, user }: HeaderNavProps) {
       </div>
 
       {/* Mobile navigation */}
-      <nav className="md:hidden border-t px-4 py-2" aria-label="Mobile navigation">
+      <nav className="md:hidden border-t px-2 py-1" aria-label="Mobile navigation">
         <div className="flex items-center justify-around">
           {navItems.map(
             (item) =>
@@ -123,8 +123,10 @@ export function HeaderNav({ currentPath, user }: HeaderNavProps) {
                 <a
                   key={item.href}
                   href={item.href}
-                  className={`flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium rounded-md ${
-                    currentPath === item.href ? "text-primary" : "text-muted-foreground"
+                  className={`flex flex-col items-center gap-1 px-4 py-3 text-xs font-medium rounded-md transition-colors ${
+                    currentPath === item.href
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                   aria-current={currentPath === item.href ? "page" : undefined}
                 >

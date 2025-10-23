@@ -17,7 +17,7 @@ interface ETagConflictDialogProps {
 export function ETagConflictDialog({ open, onOpenChange, onRefresh }: ETagConflictDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle>Session was updated elsewhere</DialogTitle>
           <DialogDescription>

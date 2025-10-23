@@ -26,7 +26,7 @@ export function SetsInput<TFieldValues extends FieldValues = FieldValues>({
   return (
     <div className="space-y-3">
       <Label className="text-base font-medium">Pull-Up Sets</Label>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-2">
         {Array.from({ length: 5 }).map((_, index) => (
           <Controller
             key={index}
