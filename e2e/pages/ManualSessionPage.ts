@@ -58,17 +58,18 @@ export class ManualSessionPage {
   }
 
   async clickSubmit() {
-    // Wait for button to be enabled (validation might be running)
+    // Wait for button to be visible
     await this.submitButton.waitFor({ state: "visible" });
 
-    // Wait for any validation to complete
-    await this.page.waitForTimeout(1000);
-
-    // Check if button is actually enabled
-    const isDisabled = await this.submitButton.isDisabled();
-    if (isDisabled) {
-      throw new Error("Submit button is disabled - form validation may be blocking submission");
-    }
+    // Wait for button to be enabled (validation might be running)
+    // Use waitForFunction to actively wait instead of fixed timeout
+    await this.page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="session-submit"]');
+        return button && !button.hasAttribute("disabled");
+      },
+      { timeout: 10000 }
+    );
 
     await this.submitButton.click();
   }
