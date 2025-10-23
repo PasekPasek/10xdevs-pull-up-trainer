@@ -54,7 +54,8 @@ export function useUrlFilters<T>({
     }
 
     setMounted(true);
-  }, [storageKey, defaultValue, serializer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync filters to URL and localStorage whenever they change
   useEffect(() => {
@@ -72,7 +73,8 @@ export function useUrlFilters<T>({
     } catch (error) {
       globalThis.reportError?.(error);
     }
-  }, [filters, mounted, storageKey, serializer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, mounted, storageKey]);
 
   const setFilters = useCallback((newFilters: T) => {
     setFiltersInternal(newFilters);

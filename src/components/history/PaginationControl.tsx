@@ -46,12 +46,17 @@ export function PaginationControl({ currentPage, totalPages, onPageChange }: Pag
         disabled={!canGoPrevious}
         aria-label="Go to previous page"
         className="gap-2"
+        data-testid="pagination-previous"
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
         <span className="hidden sm:inline">Previous</span>
       </Button>
 
-      <div className="flex items-center gap-2 text-sm font-medium" aria-current="page">
+      <div
+        className="flex items-center gap-2 text-sm font-medium"
+        aria-current="page"
+        data-testid="pagination-info"
+      >
         <span className="text-muted-foreground">Page</span>
         <span className="font-semibold">{currentPage}</span>
         <span className="text-muted-foreground">of</span>
@@ -65,6 +70,7 @@ export function PaginationControl({ currentPage, totalPages, onPageChange }: Pag
         disabled={!canGoNext}
         aria-label="Go to next page"
         className="gap-2"
+        data-testid="pagination-next"
       >
         <span className="hidden sm:inline">Next</span>
         <ChevronRight className="size-4" aria-hidden="true" />

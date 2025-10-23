@@ -24,6 +24,7 @@ export interface HistoryFilters {
 }
 
 // Serializer for URL and localStorage sync
+// Defined outside component to maintain stable reference
 const historyFiltersSerializer = {
   serialize: (filters: HistoryFilters): URLSearchParams => {
     const params = new URLSearchParams();
