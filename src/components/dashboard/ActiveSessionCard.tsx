@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
 import type { SessionDetailDTO } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ const statusVariant: Record<
   failed: { label: "Failed", variant: "destructive" },
 };
 
-export function ActiveSessionCard({
+export const ActiveSessionCard = memo(function ActiveSessionCard({
   session,
   onStart,
   onComplete,
@@ -63,7 +63,7 @@ export function ActiveSessionCard({
             <span>Sets</span>
             <span>Total reps: {session.totalReps}</span>
           </div>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-2">
             {session.sets.map((reps, index) => (
               <div key={index} className="flex flex-col items-center rounded-lg border bg-accent/40 px-2 py-2">
                 <span className="text-xs text-muted-foreground">Set {index + 1}</span>
@@ -73,13 +73,13 @@ export function ActiveSessionCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
           {actions.has("start") && onStart ? (
             <Button
-              size="sm"
+              size="default"
               onClick={() => onStart(session.id)}
               disabled={isProcessing || session.status !== "planned"}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 sm:size-auto min-h-[44px]"
               data-testid="session-start-button"
             >
               <Play className="size-4" />
@@ -89,10 +89,10 @@ export function ActiveSessionCard({
 
           {actions.has("complete") && onComplete ? (
             <Button
-              size="sm"
+              size="default"
               onClick={() => onComplete(session)}
               disabled={isProcessing}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 sm:size-auto min-h-[44px]"
               data-testid="session-complete-button"
             >
               <CheckCircle2 className="size-4" />
@@ -102,11 +102,11 @@ export function ActiveSessionCard({
 
           {actions.has("fail") && onFail ? (
             <Button
-              size="sm"
+              size="default"
               variant="outline"
               onClick={() => onFail(session)}
               disabled={isProcessing}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 sm:size-auto min-h-[44px]"
             >
               <AlertCircle className="size-4" />
               Fail
@@ -115,11 +115,11 @@ export function ActiveSessionCard({
 
           {actions.has("edit") && onEdit ? (
             <Button
-              size="sm"
+              size="default"
               variant="outline"
               onClick={() => onEdit(session)}
               disabled={isProcessing || !session.canEdit}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 sm:size-auto min-h-[44px]"
             >
               <Edit3 className="size-4" />
               Edit
@@ -128,11 +128,11 @@ export function ActiveSessionCard({
 
           {actions.has("delete") && onDelete ? (
             <Button
-              size="sm"
+              size="default"
               variant="destructive"
               onClick={() => onDelete(session)}
               disabled={isProcessing || !session.canDelete}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 sm:size-auto min-h-[44px]"
               data-testid="session-delete-button"
             >
               <Trash2 className="size-4" />
@@ -155,4 +155,4 @@ export function ActiveSessionCard({
       </CardContent>
     </Card>
   );
-}
+});

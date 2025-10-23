@@ -1,8 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { QueryClientProvider } from "../lib/providers/QueryClientProvider";
 import { Toaster } from "../components/ui/sonner";
-import RegisterForm from "../components/auth/RegisterForm";
+import RegisterFormWithProvider from "../components/auth/RegisterFormWithProvider";
 
 export const prerender = false;
 ---
@@ -15,9 +14,7 @@ export const prerender = false;
         <p class="text-muted-foreground">Start tracking your pull-up progress today</p>
       </div>
 
-      <QueryClientProvider client:load>
-        <RegisterForm client:load />
-      </QueryClientProvider>
+      <RegisterFormWithProvider client:load />
 
       <p class="text-center mt-6 text-sm text-muted-foreground">
         Already have an account?{" "}

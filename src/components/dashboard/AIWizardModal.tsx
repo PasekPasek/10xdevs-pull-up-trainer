@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ export function AIWizardModal({ quota, onSuccess }: AIWizardModalProps) {
 
   return (
     <Dialog open={true} onOpenChange={(open) => (open ? openWizard() : closeWizard())}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)]">
         {step === "input" ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <DialogHeader>
@@ -108,12 +108,21 @@ export function AIWizardModal({ quota, onSuccess }: AIWizardModalProps) {
             </DialogHeader>
             <div className="space-y-2">
               <Label htmlFor="maxPullups">Max pull-ups</Label>
-              <Input
-                id="maxPullups"
-                type="number"
-                min={1}
-                max={60}
-                {...form.register("maxPullups", { valueAsNumber: true })}
+              <Controller
+                control={form.control}
+                name="maxPullups"
+                render={({ field }) => (
+                  <Input
+                    id="maxPullups"
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber || 1)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                  />
+                )}
               />
               {form.formState.errors.maxPullups ? (
                 <p className="text-sm text-destructive">{form.formState.errors.maxPullups.message}</p>

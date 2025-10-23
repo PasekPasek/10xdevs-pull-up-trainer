@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SetsInput } from "@/components/sessions/SetsInput";
 
 const editSessionSchema = z.object({
   sessionDate: z.string().datetime({ offset: true }),
@@ -70,7 +71,7 @@ export function EditSessionDialog({ open, session, isSubmitting, onOpenChange, o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)]">
         <form onSubmit={handleSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>Edit session</DialogTitle>
@@ -79,54 +80,36 @@ export function EditSessionDialog({ open, session, isSubmitting, onOpenChange, o
 
           <div className="space-y-2">
             <Label htmlFor="sessionDate">Session date</Label>
-            <Input
-              id="sessionDate"
-              type="datetime-local"
-              disabled={disabled}
-              value={form.watch("sessionDate").slice(0, 16)}
-              onChange={(event) => {
-                const value = event.target.value;
-                form.setValue("sessionDate", new Date(value).toISOString());
-              }}
+            <Controller
+              control={form.control}
+              name="sessionDate"
+              render={({ field }) => (
+                <Input
+                  id="sessionDate"
+                  type="datetime-local"
+                  disabled={disabled}
+                  value={field.value.slice(0, 16)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(new Date(value).toISOString());
+                  }}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                />
+              )}
             />
             {form.formState.errors.sessionDate ? (
               <p className="text-sm text-destructive">{form.formState.errors.sessionDate.message}</p>
             ) : null}
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Sets</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Controller
-                  key={index}
-                  control={form.control}
-                  name={`sets.${index}`}
-                  render={({ field }) => (
-                    <div className="flex flex-col gap-1">
-                      <Label htmlFor={`edit-set-${index}`} className="text-xs text-muted-foreground">
-                        Set {index + 1}
-                      </Label>
-                      <Input
-                        id={`edit-set-${index}`}
-                        type="number"
-                        min={1}
-                        max={60}
-                        value={field.value ?? ""}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          field.onChange(value === "" ? null : Number(value));
-                        }}
-                      />
-                    </div>
-                  )}
-                />
-              ))}
-            </div>
-            {form.formState.errors.sets ? (
-              <p className="text-sm text-destructive">{form.formState.errors.sets.message}</p>
-            ) : null}
-          </div>
+          <SetsInput
+            control={form.control}
+            name="sets"
+            error={form.formState.errors.sets?.message}
+            disabled={disabled}
+            testIdPrefix="edit-set"
+          />
 
           <div className="space-y-2">
             <Label htmlFor="aiComment" className="text-sm font-medium">

@@ -194,7 +194,13 @@ export function FiltersPanel({ filters, onChange, onClear }: FiltersPanelProps) 
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <Button variant="outline" className="w-full" onClick={onClear} aria-label="Clear all filters">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onClear}
+            aria-label="Clear all filters"
+            data-testid="clear-filters-button"
+          >
             <X className="size-4 mr-2" aria-hidden="true" />
             Clear Filters
           </Button>

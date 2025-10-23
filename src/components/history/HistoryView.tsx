@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useListSessions } from "@/lib/services/sessions/hooks";
 import type { SessionStatus, SessionSortOption } from "@/types";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { FiltersPanel } from "./FiltersPanel";
 import { SessionList } from "./SessionList";
 import { PaginationControl } from "./PaginationControl";
@@ -22,73 +23,56 @@ export interface HistoryFilters {
   sort?: SessionSortOption;
 }
 
-function parseFiltersFromURL(searchParams: URLSearchParams): HistoryFilters {
-  const filters: HistoryFilters = {};
+// Serializer for URL and localStorage sync
+// Defined outside component to maintain stable reference
+const historyFiltersSerializer = {
+  serialize: (filters: HistoryFilters): URLSearchParams => {
+    const params = new URLSearchParams();
 
-  const statusParam = searchParams.getAll("status");
-  if (statusParam.length > 0) {
-    filters.status = statusParam as SessionStatus[];
-  }
-
-  const dateFrom = searchParams.get("dateFrom");
-  if (dateFrom) {
-    filters.dateFrom = dateFrom;
-  }
-
-  const dateTo = searchParams.get("dateTo");
-  if (dateTo) {
-    filters.dateTo = dateTo;
-  }
-
-  const sort = searchParams.get("sort");
-  if (sort === "sessionDate_desc" || sort === "sessionDate_asc") {
-    filters.sort = sort;
-  }
-
-  return filters;
-}
-
-function serializeFiltersToURL(filters: HistoryFilters): string {
-  const params = new URLSearchParams();
-
-  if (filters.status && filters.status.length > 0) {
-    filters.status.forEach((s) => params.append("status", s));
-  }
-
-  if (filters.dateFrom) {
-    params.append("dateFrom", filters.dateFrom);
-  }
-
-  if (filters.dateTo) {
-    params.append("dateTo", filters.dateTo);
-  }
-
-  if (filters.sort) {
-    params.append("sort", filters.sort);
-  }
-
-  return params.toString();
-}
-
-function loadFiltersFromStorage(): HistoryFilters {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    if (filters.status && filters.status.length > 0) {
+      filters.status.forEach((s) => params.append("status", s));
     }
-  } catch (error) {
-    globalThis.reportError?.(error);
-  }
-  return { sort: "sessionDate_desc" };
-}
 
-function saveFiltersToStorage(filters: HistoryFilters) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-  } catch (error) {
-    globalThis.reportError?.(error);
-  }
-}
+    if (filters.dateFrom) {
+      params.append("dateFrom", filters.dateFrom);
+    }
+
+    if (filters.dateTo) {
+      params.append("dateTo", filters.dateTo);
+    }
+
+    if (filters.sort) {
+      params.append("sort", filters.sort);
+    }
+
+    return params;
+  },
+  deserialize: (searchParams: URLSearchParams): HistoryFilters => {
+    const filters: HistoryFilters = {};
+
+    const statusParam = searchParams.getAll("status");
+    if (statusParam.length > 0) {
+      filters.status = statusParam as SessionStatus[];
+    }
+
+    const dateFrom = searchParams.get("dateFrom");
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+    }
+
+    const dateTo = searchParams.get("dateTo");
+    if (dateTo) {
+      filters.dateTo = dateTo;
+    }
+
+    const sort = searchParams.get("sort");
+    if (sort === "sessionDate_desc" || sort === "sessionDate_asc") {
+      filters.sort = sort;
+    }
+
+    return filters;
+  },
+};
 
 function validateDateRange(dateFrom?: string, dateTo?: string): boolean {
   if (!dateFrom || !dateTo) return true;
@@ -96,35 +80,14 @@ function validateDateRange(dateFrom?: string, dateTo?: string): boolean {
 }
 
 function HistoryViewInner() {
-  const [mounted, setMounted] = useState(false);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<HistoryFilters>({ sort: "sessionDate_desc" });
 
-  // Initialize filters from URL or localStorage on mount
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlFilters = parseFiltersFromURL(searchParams);
-
-    if (Object.keys(urlFilters).length > 0) {
-      setFilters(urlFilters);
-    } else {
-      const storedFilters = loadFiltersFromStorage();
-      setFilters(storedFilters);
-    }
-
-    setMounted(true);
-  }, []);
-
-  // Sync filters to URL and localStorage
-  useEffect(() => {
-    if (!mounted) return;
-
-    const queryString = serializeFiltersToURL(filters);
-    const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
-
-    window.history.replaceState(null, "", newUrl);
-    saveFiltersToStorage(filters);
-  }, [filters, mounted]);
+  // Use custom hook for URL and localStorage sync
+  const [filters, setFilters] = useUrlFilters({
+    storageKey: STORAGE_KEY,
+    defaultValue: { sort: "sessionDate_desc" as SessionSortOption },
+    serializer: historyFiltersSerializer,
+  });
 
   const { data, isLoading, isError, error, refetch } = useListSessions({
     page,
@@ -135,27 +98,30 @@ function HistoryViewInner() {
     sort: filters.sort || "sessionDate_desc",
   });
 
-  const handleFiltersChange = (newFilters: HistoryFilters) => {
-    // Validate date range
-    if (!validateDateRange(newFilters.dateFrom, newFilters.dateTo)) {
-      toast.error("Start date must be before or equal to end date");
-      return;
-    }
+  const handleFiltersChange = useCallback(
+    (newFilters: HistoryFilters) => {
+      // Validate date range
+      if (!validateDateRange(newFilters.dateFrom, newFilters.dateTo)) {
+        toast.error("Start date must be before or equal to end date");
+        return;
+      }
 
-    setFilters(newFilters);
-    setPage(1); // Reset to page 1 when filters change
-  };
+      setFilters(newFilters);
+      setPage(1); // Reset to page 1 when filters change
+    },
+    [setFilters]
+  );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({ sort: "sessionDate_desc" });
     setPage(1);
-  };
+  }, [setFilters]);
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     if (isError) {
@@ -166,11 +132,16 @@ function HistoryViewInner() {
 
   const sessions = data?.data.sessions || [];
   const pagination = data?.data.pagination;
-  const hasFilters =
-    (filters.status && filters.status.length > 0) ||
-    filters.dateFrom ||
-    filters.dateTo ||
-    filters.sort !== "sessionDate_desc";
+
+  // Memoize expensive computation
+  const hasFilters = useMemo(
+    () =>
+      (filters.status && filters.status.length > 0) ||
+      filters.dateFrom ||
+      filters.dateTo ||
+      filters.sort !== "sessionDate_desc",
+    [filters]
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

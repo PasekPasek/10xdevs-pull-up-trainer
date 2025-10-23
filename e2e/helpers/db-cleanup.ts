@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Create a Supabase client for test cleanup
@@ -10,21 +10,21 @@ function getSupabaseClient() {
   const supabaseKey = process.env.SUPABASE_KEY;
 
   if (!supabaseUrl) {
-    throw new Error('Missing SUPABASE_URL environment variable');
+    throw new Error("Missing SUPABASE_URL environment variable");
   }
 
   // Use service role key for cleanup if available (bypasses RLS)
   const key = supabaseServiceKey || supabaseKey;
-  
+
   if (!key) {
-    throw new Error('Missing SUPABASE_KEY or SUPABASE_SERVICE_ROLE_KEY environment variable');
+    throw new Error("Missing SUPABASE_KEY or SUPABASE_SERVICE_ROLE_KEY environment variable");
   }
 
   return createClient(supabaseUrl, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 }
 
@@ -44,19 +44,19 @@ export async function cleanupUserSessions(userId: string, userEmail?: string, us
       });
 
       if (authError) {
-        console.error('Error authenticating for cleanup:', authError);
+        console.error("Error authenticating for cleanup:", authError);
         // Continue anyway - service role might be configured
       }
     }
 
     // First, check how many sessions exist
     const { data: existingSessions, error: fetchError } = await supabase
-      .from('sessions')
-      .select('id')
-      .eq('user_id', userId);
+      .from("sessions")
+      .select("id")
+      .eq("user_id", userId);
 
     if (fetchError) {
-      console.error('Error fetching sessions:', fetchError);
+      console.error("Error fetching sessions:", fetchError);
       throw fetchError;
     }
 
@@ -69,23 +69,23 @@ export async function cleanupUserSessions(userId: string, userEmail?: string, us
 
     // Delete all sessions for the test user
     const { error: deleteError, count } = await supabase
-      .from('sessions')
-      .delete({ count: 'exact' })
-      .eq('user_id', userId);
+      .from("sessions")
+      .delete({ count: "exact" })
+      .eq("user_id", userId);
 
     if (deleteError) {
-      console.error('Error deleting sessions:', deleteError);
+      console.error("Error deleting sessions:", deleteError);
       throw deleteError;
     }
 
     console.log(`Deleted ${count || 0} sessions for user ${userId}`);
-    
+
     // Sign out after cleanup
     if (userEmail && userPassword) {
       await supabase.auth.signOut();
     }
   } catch (error) {
-    console.error('Failed to cleanup sessions:', error);
+    console.error("Failed to cleanup sessions:", error);
     throw error;
   }
 }
@@ -97,16 +97,15 @@ export async function getUserSessions(userId: string) {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
-    .from('sessions')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .from("sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching sessions:', error);
+    console.error("Error fetching sessions:", error);
     throw error;
   }
 
   return data || [];
 }
-
