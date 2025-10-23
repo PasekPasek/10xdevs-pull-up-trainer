@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type { SessionDTO } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +29,7 @@ function formatDate(value: string) {
   }
 }
 
-export function LastCompletedCard({ session, className }: LastCompletedCardProps) {
+export const LastCompletedCard = memo(function LastCompletedCard({ session, className }: LastCompletedCardProps) {
   const { label, variant } = statusVariant[session.status];
 
   return (
@@ -80,4 +82,4 @@ export function LastCompletedCard({ session, className }: LastCompletedCardProps
       </CardContent>
     </Card>
   );
-}
+});

@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Play, CheckCircle, XCircle, Edit, Trash2 } from "lucide-react";
 
 import type { SessionDetailDTO, CompleteSessionCommand } from "@/types";
-import {
-  useStartSessionMutation,
-  useCompleteSessionMutation,
-  useFailSessionMutation,
-  useUpdateSessionMutation,
-  useDeleteSessionMutation,
-} from "@/lib/services/sessions/hooks";
+import { useSessionActions } from "@/hooks/useSessionActions";
+import { useSessionDialogs } from "@/hooks/useDialogState";
 import { Button } from "@/components/ui/button";
 import { SessionCompleteDialog } from "@/components/dashboard/SessionCompleteDialog";
 import { EditSessionDialog, type EditSessionFormValues } from "@/components/dashboard/EditSessionDialog";
 import { ConfirmActionDialog } from "@/components/dashboard/ConfirmActionDialog";
 import { ETagConflictDialog } from "@/components/dashboard/ETagConflictDialog";
-import { isHttpError } from "@/lib/utils/httpError";
 import { normalizeSets } from "@/lib/utils/session";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -37,144 +31,89 @@ interface ActionBarProps {
   onDeleteError?: (error: unknown) => void;
 }
 
-export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSuccess, onDeleteError }: ActionBarProps) {
+export function ActionBar({ session, onDeleteSuccess }: ActionBarProps) {
   const queryClient = useQueryClient();
-  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [failDialogOpen, setFailDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
 
-  // Mutations
-  const startMutation = useStartSessionMutation({
+  // Use custom hooks for dialog state and session actions
+  const { completeDialog, failDialog, deleteDialog, editDialog } = useSessionDialogs();
+
+  const invalidateQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+    queryClient.invalidateQueries({ queryKey: ["sessions"] });
+  }, [queryClient, session.id]);
+
+  const {
+    startMutation,
+    completeMutation,
+    failMutation,
+    updateMutation,
+    deleteMutation,
+    isProcessing: isAnyMutationLoading,
+  } = useSessionActions({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session", session.id] });
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Session started successfully");
-      onStartSuccess?.();
+      invalidateQueries();
+      completeDialog.closeDialog();
+      failDialog.closeDialog();
+      editDialog.closeDialog();
     },
-    onError: (error) => {
-      if (isHttpError(error)) {
-        toast.error(error.message || "Failed to start session");
-      } else {
-        toast.error("Failed to start session");
-      }
-      onStartError?.(error);
+    onConflict: () => {
+      setConflictDialogOpen(true);
+      editDialog.closeDialog();
     },
   });
 
-  const completeMutation = useCompleteSessionMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session", session.id] });
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Session completed successfully");
-      setCompleteDialogOpen(false);
-    },
-    onError: (error) => {
-      if (isHttpError(error)) {
-        toast.error(error.message || "Failed to complete session");
-      } else {
-        toast.error("Failed to complete session");
-      }
-    },
-  });
-
-  const failMutation = useFailSessionMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session", session.id] });
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Session marked as failed");
-      setFailDialogOpen(false);
-    },
-    onError: (error) => {
-      if (isHttpError(error)) {
-        toast.error(error.message || "Failed to fail session");
-      } else {
-        toast.error("Failed to fail session");
-      }
-    },
-  });
-
-  const updateMutation = useUpdateSessionMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session", session.id] });
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Session updated successfully");
-      setEditDialogOpen(false);
-    },
-    onError: (error) => {
-      if (isHttpError(error)) {
-        if (error.status === 409) {
-          setConflictDialogOpen(true);
-          setEditDialogOpen(false);
-          return;
-        }
-        toast.error(error.message || "Failed to update session");
-      } else {
-        toast.error("Failed to update session");
-      }
-    },
-  });
-
-  const deleteMutation = useDeleteSessionMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      toast.success("Session deleted successfully");
-      setDeleteDialogOpen(false);
-      setPendingRedirect(true);
-      onDeleteSuccess?.();
-    },
-    onError: (error) => {
-      if (isHttpError(error)) {
-        toast.error(error.message || "Failed to delete session");
-      } else {
-        toast.error("Failed to delete session");
-      }
-      onDeleteError?.(error);
-    },
-  });
-
-  // Action handlers
-  const handleStart = () => {
+  // Action handlers with useCallback
+  const handleStart = useCallback(() => {
     startMutation.mutate({ sessionId: session.id });
-  };
+  }, [startMutation, session.id]);
 
-  const handleComplete = (values: { sets: (number | null)[]; rpe?: number | null }) => {
-    const command: CompleteSessionCommand = {
-      sets: normalizeSets(values.sets),
-      rpe: values.rpe ?? undefined,
-    };
-    completeMutation.mutate({ sessionId: session.id, command });
-  };
+  const handleComplete = useCallback(
+    (values: { sets: (number | null)[]; rpe?: number | null }) => {
+      const command: CompleteSessionCommand = {
+        sets: normalizeSets(values.sets),
+        rpe: values.rpe ?? undefined,
+      };
+      completeMutation.mutate({ sessionId: session.id, command });
+    },
+    [completeMutation, session.id]
+  );
 
-  const handleFail = () => {
+  const handleFail = useCallback(() => {
     failMutation.mutate({ sessionId: session.id });
-  };
+  }, [failMutation, session.id]);
 
-  const handleEdit = (values: EditSessionFormValues) => {
-    const command = {
-      sessionDate: values.sessionDate,
-      sets: normalizeSets(values.sets),
-      aiComment: values.aiComment?.trim() || null,
-      markAsModified: true,
-    };
-    updateMutation.mutate({
-      sessionId: session.id,
-      command,
-      etag: session.updatedAt,
-    });
-  };
+  const handleEdit = useCallback(
+    (values: EditSessionFormValues) => {
+      const command = {
+        sessionDate: values.sessionDate,
+        sets: normalizeSets(values.sets),
+        aiComment: values.aiComment?.trim() || null,
+        markAsModified: true,
+      };
+      updateMutation.mutate({
+        sessionId: session.id,
+        command,
+        etag: session.updatedAt,
+      });
+    },
+    [updateMutation, session.id, session.updatedAt]
+  );
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     deleteMutation.mutate({ sessionId: session.id });
-  };
+    setPendingRedirect(true);
+    if (onDeleteSuccess) {
+      onDeleteSuccess();
+    }
+  }, [deleteMutation, session.id, onDeleteSuccess]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setConflictDialogOpen(false);
     await queryClient.invalidateQueries({ queryKey: ["session", session.id] });
     toast.success("Session data refreshed");
-  };
+  }, [queryClient, session.id]);
 
   useEffect(() => {
     if (!pendingRedirect) {
@@ -193,13 +132,6 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
     return null;
   }
 
-  const isAnyMutationLoading =
-    startMutation.isPending ||
-    completeMutation.isPending ||
-    failMutation.isPending ||
-    updateMutation.isPending ||
-    deleteMutation.isPending;
-
   return (
     <>
       <div className="flex flex-wrap gap-2">
@@ -211,7 +143,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
         )}
 
         {session.actions.includes("complete") && (
-          <Button onClick={() => setCompleteDialogOpen(true)} disabled={isAnyMutationLoading} className="gap-2">
+          <Button onClick={() => completeDialog.openDialog(session)} disabled={isAnyMutationLoading} className="gap-2">
             <CheckCircle className="h-4 w-4" />
             Complete Session
           </Button>
@@ -219,7 +151,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
 
         {session.actions.includes("fail") && (
           <Button
-            onClick={() => setFailDialogOpen(true)}
+            onClick={() => failDialog.openDialog(session)}
             disabled={isAnyMutationLoading}
             variant="destructive"
             className="gap-2"
@@ -231,7 +163,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
 
         {session.actions.includes("edit") && (
           <Button
-            onClick={() => setEditDialogOpen(true)}
+            onClick={() => editDialog.openDialog(session, session.updatedAt)}
             disabled={isAnyMutationLoading}
             variant="outline"
             className="gap-2"
@@ -243,7 +175,7 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
 
         {session.actions.includes("delete") && (
           <Button
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={() => deleteDialog.openDialog(session)}
             disabled={isAnyMutationLoading}
             variant="destructive"
             className="gap-2"
@@ -256,44 +188,44 @@ export function ActionBar({ session, onStartSuccess, onStartError, onDeleteSucce
 
       {/* Complete Dialog */}
       <SessionCompleteDialog
-        open={completeDialogOpen}
-        session={session}
+        open={completeDialog.open}
+        session={completeDialog.data}
         isSubmitting={completeMutation.isPending}
-        onOpenChange={setCompleteDialogOpen}
+        onOpenChange={completeDialog.setOpen}
         onSubmit={handleComplete}
       />
 
       {/* Edit Dialog */}
       <EditSessionDialog
-        open={editDialogOpen}
-        session={session}
-        etag={session.updatedAt}
+        open={editDialog.open}
+        session={editDialog.data}
+        etag={editDialog.etag}
         isSubmitting={updateMutation.isPending}
-        onOpenChange={setEditDialogOpen}
+        onOpenChange={editDialog.setOpen}
         onSubmit={handleEdit}
       />
 
       {/* Fail Confirmation Dialog */}
       <ConfirmActionDialog
-        open={failDialogOpen}
+        open={failDialog.open}
         title="Fail session"
         description="Are you sure you want to mark this session as failed? This action is irreversible."
         confirmLabel="Fail session"
         variant="destructive"
         isSubmitting={failMutation.isPending}
-        onOpenChange={setFailDialogOpen}
+        onOpenChange={failDialog.setOpen}
         onConfirm={handleFail}
       />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmActionDialog
-        open={deleteDialogOpen}
+        open={deleteDialog.open}
         title="Delete session"
         description="Are you sure you want to delete this session? This action cannot be undone."
         confirmLabel="Delete"
         variant="destructive"
         isSubmitting={deleteMutation.isPending}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={deleteDialog.setOpen}
         onConfirm={handleDelete}
       />
 

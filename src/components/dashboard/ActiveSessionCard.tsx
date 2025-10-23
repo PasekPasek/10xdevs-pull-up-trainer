@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
 import type { SessionDetailDTO } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ const statusVariant: Record<
   failed: { label: "Failed", variant: "destructive" },
 };
 
-export function ActiveSessionCard({
+export const ActiveSessionCard = memo(function ActiveSessionCard({
   session,
   onStart,
   onComplete,
@@ -155,4 +155,4 @@ export function ActiveSessionCard({
       </CardContent>
     </Card>
   );
-}
+});

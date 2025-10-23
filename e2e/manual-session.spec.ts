@@ -1,17 +1,17 @@
-import { test, expect } from '@playwright/test';
-import { ManualSessionPage } from './pages/ManualSessionPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { TEST_USER, getTodayLocalDate } from './helpers/test-data';
-import { login } from './helpers/auth';
-import { cleanupUserSessions } from './helpers/db-cleanup';
+import { test, expect } from "@playwright/test";
+import { ManualSessionPage } from "./pages/ManualSessionPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { TEST_USER, getTodayLocalDate } from "./helpers/test-data";
+import { login } from "./helpers/auth";
+import { cleanupUserSessions } from "./helpers/db-cleanup";
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: "serial" });
 
-test.describe('Manual Session Creation', () => {
+test.describe("Manual Session Creation", () => {
   test.beforeEach(async ({ page }) => {
     // Cleanup before each test to ensure clean state
     await cleanupUserSessions(TEST_USER.id, TEST_USER.email, TEST_USER.password);
-    
+
     // Login before each test
     await login(page, TEST_USER.email, TEST_USER.password);
   });
@@ -21,22 +21,22 @@ test.describe('Manual Session Creation', () => {
     await cleanupUserSessions(TEST_USER.id, TEST_USER.email, TEST_USER.password);
   });
 
-  test('should create manual session with all sets', async ({ page }) => {
+  test("should create manual session with all sets", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
-    
+
     await manualSessionPage.goto();
     await manualSessionPage.createSession(getTodayLocalDate(), [10, 12, 10, 10, 11]);
 
     // Should redirect to dashboard
-    await expect(page).toHaveURL('/dashboard');
-    
+    await expect(page).toHaveURL("/dashboard");
+
     // Verify we're on the dashboard (session was created successfully)
     await expect(page.locator('h1:has-text("Dashboard")')).toBeVisible();
   });
 
-  test('should calculate total reps correctly', async ({ page }) => {
+  test("should calculate total reps correctly", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
-    
+
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(getTodayLocalDate());
     await manualSessionPage.fillAllSets([10, 12, 10, 10, 11]);
@@ -46,68 +46,68 @@ test.describe('Manual Session Creation', () => {
 
     // Verify total reps calculation
     const totalReps = await manualSessionPage.getTotalReps();
-    expect(totalReps).toBe('53');
+    expect(totalReps).toBe("53");
   });
 
-  test('should create and start session immediately', async ({ page }) => {
+  test("should create and start session immediately", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
-    
+
     await manualSessionPage.goto();
     await manualSessionPage.fillDate(getTodayLocalDate());
     await manualSessionPage.fillAllSets([10, 12, 10, 10, 11]);
-    
+
     // Enable start now
     await manualSessionPage.clickStartNow();
-    
+
     await manualSessionPage.clickSubmit();
     await manualSessionPage.waitForRedirect();
 
     // Should redirect to dashboard
-    await expect(page).toHaveURL('/dashboard');
-    
+    await expect(page).toHaveURL("/dashboard");
+
     // Active session card should show "In progress" status
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.waitForLoad();
-    
+
     const activeSessionCard = await dashboardPage.getActiveSessionCard();
     await expect(activeSessionCard).toBeVisible();
-    await expect(activeSessionCard.locator('text=In progress')).toBeVisible();
+    await expect(activeSessionCard.locator("text=In progress")).toBeVisible();
   });
 
-  test('should validate required fields', async ({ page }) => {
+  test("should validate required fields", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
-    
+
     await manualSessionPage.goto();
-    
+
     // Try to submit without filling any fields
     await manualSessionPage.clickSubmit();
 
     // Should not redirect (stay on form)
-    await expect(page).toHaveURL('/sessions/new');
+    await expect(page).toHaveURL("/sessions/new");
   });
 
-  test('should redirect to dashboard after creation', async ({ page }) => {
+  test("should redirect to dashboard after creation", async ({ page }) => {
     const manualSessionPage = new ManualSessionPage(page);
-    
+
     await manualSessionPage.goto();
     await manualSessionPage.createSession(getTodayLocalDate(), [15, 12, 10, 10, 13]);
 
     // Verify redirect to dashboard
-    await expect(page).toHaveURL('/dashboard');
-    
+    await expect(page).toHaveURL("/dashboard");
+
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.waitForLoad();
   });
 
-  test('should delete a planned session from dashboard', async ({ page }) => {
+  test("should delete a planned session from dashboard", async ({ page }) => {
     // Create a session first
     const manualSessionPage = new ManualSessionPage(page);
     await manualSessionPage.goto();
     await manualSessionPage.createSession(getTodayLocalDate(), [10, 12, 10, 10, 11]);
 
     // Wait for redirect to dashboard
-    await page.waitForURL('/dashboard');
-    
+    await page.waitForURL("/dashboard");
+
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.waitForLoad();
 
@@ -128,4 +128,3 @@ test.describe('Manual Session Creation', () => {
     await expect(activeSessionCard).not.toBeVisible();
   });
 });
-

@@ -1,15 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useDashboardSnapshot, useInvalidateDashboard } from "@/lib/services/dashboard/hooks";
 import { normalizeSets } from "@/lib/utils/session";
-import {
-  useCompleteSessionMutation,
-  useDeleteSessionMutation,
-  useFailSessionMutation,
-  useStartSessionMutation,
-  useUpdateSessionMutation,
-} from "@/lib/services/sessions/hooks";
+import { useSessionActions } from "@/hooks/useSessionActions";
+import { useSessionDialogs } from "@/hooks/useDialogState";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ActiveSessionCard } from "@/components/dashboard/ActiveSessionCard";
 import { LastCompletedCard } from "@/components/dashboard/LastCompletedCard";
@@ -33,102 +28,50 @@ function DashboardViewInner() {
   const invalidate = useInvalidateDashboard();
   const snapshotQuery = useDashboardSnapshot();
   const { setWizardState, closeWizard } = useDashboardContext();
-
-  const [completeDialog, setCompleteDialog] = useState<{ open: boolean; session?: SessionDetailDTO }>({ open: false });
-  const [failDialog, setFailDialog] = useState<{ open: boolean; session?: SessionDetailDTO }>({ open: false });
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; session?: SessionDetailDTO }>({ open: false });
-  const [editDialog, setEditDialog] = useState<{ open: boolean; session?: SessionDetailDTO; etag?: string }>({
-    open: false,
-  });
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
 
+  // Use custom hooks for dialog state and session actions
+  const { completeDialog, failDialog, deleteDialog, editDialog } = useSessionDialogs();
+  const { startMutation, completeMutation, failMutation, updateMutation, deleteMutation, isProcessing } =
+    useSessionActions({
+      onSuccess: invalidate,
+      onConflict: () => setConflictDialogOpen(true),
+    });
+
   const snapshot = snapshotQuery.data;
-
-  const startMutation = useStartSessionMutation({
-    onSuccess: () => {
-      toast.success("Session started");
-      invalidate();
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to start session");
-    },
-  });
-
-  const failMutation = useFailSessionMutation({
-    onSuccess: () => {
-      toast.success("Session marked as failed");
-      invalidate();
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to fail session");
-    },
-  });
-
-  const completeMutation = useCompleteSessionMutation({
-    onSuccess: () => {
-      toast.success("Session completed");
-      invalidate();
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to complete session");
-    },
-  });
-
-  const deleteMutation = useDeleteSessionMutation({
-    onSuccess: () => {
-      toast.success("Session deleted");
-      invalidate();
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to delete session");
-    },
-  });
-
-  const updateMutation = useUpdateSessionMutation({
-    onSuccess: () => {
-      toast.success("Session updated");
-      invalidate();
-    },
-    onError: (error) => {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as { code?: string }).code === "OPTIMISTIC_LOCK_FAILURE"
-      ) {
-        setConflictDialogOpen(true);
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : "Failed to update session");
-    },
-  });
-
-  const isProcessing =
-    startMutation.isPending ||
-    failMutation.isPending ||
-    completeMutation.isPending ||
-    deleteMutation.isPending ||
-    updateMutation.isPending;
 
   const isLoading = snapshotQuery.isLoading;
   const isError = snapshotQuery.isError;
 
-  const handleComplete = (session: SessionDetailDTO) => {
-    setCompleteDialog({ open: true, session });
-  };
+  const handleComplete = useCallback(
+    (session: SessionDetailDTO) => {
+      completeDialog.openDialog(session);
+    },
+    [completeDialog]
+  );
 
-  const handleFail = (session: SessionDetailDTO) => {
-    setFailDialog({ open: true, session });
-  };
+  const handleFail = useCallback(
+    (session: SessionDetailDTO) => {
+      failDialog.openDialog(session);
+    },
+    [failDialog]
+  );
 
-  const handleDelete = (session: SessionDetailDTO) => {
-    setDeleteDialog({ open: true, session });
-  };
+  const handleDelete = useCallback(
+    (session: SessionDetailDTO) => {
+      deleteDialog.openDialog(session);
+    },
+    [deleteDialog]
+  );
 
-  const handleEdit = (session: SessionDetailDTO) => {
-    setEditDialog({ open: true, session, etag: session.updatedAt ?? undefined });
-  };
+  const handleEdit = useCallback(
+    (session: SessionDetailDTO) => {
+      editDialog.openDialog(session, session.updatedAt ?? undefined);
+    },
+    [editDialog]
+  );
 
-  const handleCreateAi = () => {
+  const handleCreateAi = useCallback(() => {
     if (!snapshot?.aiQuota) {
       setWizardState({ quota: undefined, step: "quota" });
       return;
@@ -160,49 +103,55 @@ function DashboardViewInner() {
         step: "input",
       });
     }
-  };
+  }, [snapshot, setWizardState]);
 
-  const handleCompleteSubmit = (values: { sets: (number | null)[]; rpe?: number | null }) => {
-    const sessionId = completeDialog.session?.id;
-    if (!sessionId) return;
-    completeMutation.mutate({
-      sessionId,
-      command: {
-        sets: normalizeSets(values.sets),
-        rpe: values.rpe ?? undefined,
-      },
-    });
-    setCompleteDialog({ open: false });
-  };
+  const handleCompleteSubmit = useCallback(
+    (values: { sets: (number | null)[]; rpe?: number | null }) => {
+      const sessionId = completeDialog.data?.id;
+      if (!sessionId) return;
+      completeMutation.mutate({
+        sessionId,
+        command: {
+          sets: normalizeSets(values.sets),
+          rpe: values.rpe ?? undefined,
+        },
+      });
+      completeDialog.closeDialog();
+    },
+    [completeDialog, completeMutation]
+  );
 
-  const handleFailConfirm = () => {
-    const sessionId = failDialog.session?.id;
+  const handleFailConfirm = useCallback(() => {
+    const sessionId = failDialog.data?.id;
     if (!sessionId) return;
     failMutation.mutate({ sessionId });
-    setFailDialog({ open: false });
-  };
+    failDialog.closeDialog();
+  }, [failDialog, failMutation]);
 
-  const handleDeleteConfirm = () => {
-    const sessionId = deleteDialog.session?.id;
+  const handleDeleteConfirm = useCallback(() => {
+    const sessionId = deleteDialog.data?.id;
     if (!sessionId) return;
     deleteMutation.mutate({ sessionId });
-    setDeleteDialog({ open: false });
-  };
+    deleteDialog.closeDialog();
+  }, [deleteDialog, deleteMutation]);
 
-  const handleEditSubmit = (values: EditSessionFormValues) => {
-    const current = editDialog.session;
-    if (!current || !editDialog.etag) return;
-    updateMutation.mutate({
-      sessionId: current.id,
-      command: {
-        sessionDate: values.sessionDate,
-        sets: normalizeSets(values.sets),
-        aiComment: values.aiComment ?? undefined,
-      },
-      etag: editDialog.etag,
-    });
-    setEditDialog({ open: false });
-  };
+  const handleEditSubmit = useCallback(
+    (values: EditSessionFormValues) => {
+      const current = editDialog.data;
+      if (!current || !editDialog.etag) return;
+      updateMutation.mutate({
+        sessionId: current.id,
+        command: {
+          sessionDate: values.sessionDate,
+          sets: normalizeSets(values.sets),
+          aiComment: values.aiComment ?? undefined,
+        },
+        etag: editDialog.etag,
+      });
+      editDialog.closeDialog();
+    },
+    [editDialog, updateMutation]
+  );
 
   return (
     <>
@@ -270,8 +219,8 @@ function DashboardViewInner() {
 
       <SessionCompleteDialog
         open={completeDialog.open}
-        session={completeDialog.session}
-        onOpenChange={(open) => setCompleteDialog((prev) => ({ ...prev, open }))}
+        session={completeDialog.data}
+        onOpenChange={completeDialog.setOpen}
         onSubmit={handleCompleteSubmit}
         isSubmitting={completeMutation.isPending}
       />
@@ -282,7 +231,7 @@ function DashboardViewInner() {
         description="This action cannot be undone."
         confirmLabel="Fail session"
         variant="destructive"
-        onOpenChange={(open) => setFailDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={failDialog.setOpen}
         onConfirm={handleFailConfirm}
         isSubmitting={failMutation.isPending}
       />
@@ -293,15 +242,15 @@ function DashboardViewInner() {
         description="This will remove the session permanently."
         confirmLabel="Delete"
         variant="destructive"
-        onOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={deleteDialog.setOpen}
         onConfirm={handleDeleteConfirm}
         isSubmitting={deleteMutation.isPending}
       />
 
       <EditSessionDialog
         open={editDialog.open}
-        session={editDialog.session}
-        onOpenChange={(open) => setEditDialog((prev) => ({ ...prev, open }))}
+        session={editDialog.data}
+        onOpenChange={editDialog.setOpen}
         onSubmit={handleEditSubmit}
         isSubmitting={updateMutation.isPending}
       />

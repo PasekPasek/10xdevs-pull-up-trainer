@@ -3,11 +3,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import {
-  registerFormSchema,
-  type RegisterFormValues,
-  calculatePasswordStrength,
-} from "@/lib/validation/ui/registerForm.schema";
+import { registerFormSchema, type RegisterFormValues } from "@/lib/validation/ui/registerForm.schema";
+import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +18,6 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const emailFieldRef = useRef<HTMLInputElement | null>(null);
-  const [passwordStrength, setPasswordStrength] = useState<{
-    strength: "weak" | "medium" | "strong";
-    percentage: number;
-  }>({ strength: "weak", percentage: 0 });
 
   const form = useForm({
     resolver: zodResolver(registerFormSchema),
@@ -36,14 +29,7 @@ function RegisterForm() {
   });
 
   const password = form.watch("password");
-
-  useEffect(() => {
-    if (password) {
-      setPasswordStrength(calculatePasswordStrength(password));
-    } else {
-      setPasswordStrength({ strength: "weak", percentage: 0 });
-    }
-  }, [password]);
+  const passwordStrength = usePasswordStrength(password);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

@@ -99,7 +99,14 @@ export function HeaderNav({ currentPath, user }: HeaderNavProps) {
         <div className="flex items-center gap-4">
           {user?.email && <div className="hidden sm:block text-sm text-muted-foreground">{user.email}</div>}
           {user ? (
-            <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={isLoading} className="gap-2" data-testid="header-logout">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              disabled={isLoading}
+              className="gap-2"
+              data-testid="header-logout"
+            >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               <span>{isLoading ? "Signing out..." : "Sign Out"}</span>
             </Button>

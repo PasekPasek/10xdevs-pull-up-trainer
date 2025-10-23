@@ -13,6 +13,7 @@ import { useCreateSession, useSessionValidation } from "@/lib/services/sessions/
 import { localDateToUtcIso, getMaxFutureDate, isPast, isTodayOrFuture } from "@/lib/utils/date";
 import { computeTotal, normalizeSets } from "@/lib/utils/session";
 import { isHttpError } from "@/lib/utils/httpError";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { CreateSessionCommand } from "@/types";
 
 import { Button } from "@/components/ui/button";
@@ -26,25 +27,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { BlockingAlert } from "./BlockingAlert";
 import { InlineAlert } from "./InlineAlert";
-
-/**
- * Custom hook for debounced value
- */
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 /**
  * SessionForm component for creating manual training sessions

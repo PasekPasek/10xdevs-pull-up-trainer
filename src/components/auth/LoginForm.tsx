@@ -82,7 +82,7 @@ function LoginForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-              <Controller
+            <Controller
               control={form.control}
               name="email"
               render={({ field }) => (
@@ -111,7 +111,7 @@ function LoginForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-              <Controller
+            <Controller
               control={form.control}
               name="password"
               render={({ field }) => (

@@ -14,4 +14,3 @@ describe("openrouter helpers", () => {
     expect(openRouterHelpers.MAX_COMMENT_LENGTH).toBeGreaterThan(openRouterHelpers.MIN_COMMENT_LENGTH);
   });
 });
-
