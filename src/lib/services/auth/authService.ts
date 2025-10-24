@@ -44,6 +44,7 @@ export class AuthService {
 
     if (signUpError) {
       // Log the actual error for debugging
+      // eslint-disable-next-line no-console
       console.error("Supabase signUp error:", {
         message: signUpError.message,
         status: signUpError.status,
@@ -56,8 +57,8 @@ export class AuthService {
       }
 
       // Include the actual error message for better debugging
-      const error = new Error("REGISTRATION_FAILED");
-      (error as any).cause = signUpError.message;
+      const error = new Error("REGISTRATION_FAILED") as Error & { cause?: string };
+      error.cause = signUpError.message;
       throw error;
     }
 

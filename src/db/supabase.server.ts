@@ -37,6 +37,7 @@ export function createSupabaseServerInstance({ headers, cookies, env }: CreateSu
 
   // Debug logging for Cloudflare deployment
   if (!supabaseUrl || !supabaseKey) {
+    // eslint-disable-next-line no-console
     console.error("Supabase credentials missing!", {
       hasRuntimeUrl: !!env?.SUPABASE_URL,
       hasRuntimeKey: !!env?.SUPABASE_KEY,

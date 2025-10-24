@@ -76,13 +76,7 @@ export const POST: APIRoute = async (context) => {
     const apiKey = runtime?.env?.OPENROUTER_API_KEY;
 
     // Generate AI session (with MOCK LLM)
-    const { session, generation } = await generateAiSession(
-      { supabase, apiKey },
-      user.id,
-      maxPullups,
-      model,
-      startNow
-    );
+    const { session, generation } = await generateAiSession({ supabase, apiKey }, user.id, maxPullups, model, startNow);
 
     // Get updated quota
     const quota = await getQuota({ supabase }, user.id);

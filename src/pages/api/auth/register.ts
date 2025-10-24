@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       if (error.message === "REGISTRATION_FAILED") {
         // Include the underlying Supabase error for debugging
-        const cause = (error as any).cause;
+        const cause = (error as Error & { cause?: string }).cause;
         return buildErrorResponse(
           createHttpError({
             status: 500,
