@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 
 import { buildErrorResponse, createHttpError } from "../../../../lib/utils/httpError";
 import { getQuota } from "../../../../lib/services/ai/getQuota";
+import { requireFeature } from "../../../../features";
 
 export const prerender = false;
 
@@ -30,6 +31,9 @@ export const GET: APIRoute = async (context) => {
         details: { requestId },
       });
     }
+
+    // Check feature flag
+    requireFeature("ENABLE_GENERATING_AI_SESSIONS");
 
     // Get quota
     const quota = await getQuota({ supabase }, user.id);

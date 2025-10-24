@@ -57,6 +57,23 @@ function normaliseError(error: unknown): NormalisedError {
     };
   }
 
+  // Handle FeatureDisabledError (has status and message properties)
+  if (
+    error &&
+    typeof error === "object" &&
+    "status" in error &&
+    "message" in error &&
+    typeof error.status === "number" &&
+    typeof error.message === "string"
+  ) {
+    return {
+      status: error.status,
+      code: "name" in error && typeof error.name === "string" ? error.name.toUpperCase() : "FEATURE_DISABLED",
+      message: error.message,
+      details: "flag" in error ? { flag: error.flag } : {},
+    };
+  }
+
   return {
     status: 500,
     code: "INTERNAL_SERVER_ERROR",

@@ -2,6 +2,7 @@ import type { AdminKpiSummaryDTO } from "@/types";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { isFeatureEnabled } from "@/features";
 import { Users, Activity, Zap, TrendingUp, TrendingDown, GitMerge } from "lucide-react";
 
 interface KpiCardGridProps {
@@ -22,10 +23,12 @@ function formatCorrelation(value: number): string {
 }
 
 export function KpiCardGrid({ metrics, isLoading }: KpiCardGridProps) {
+  const aiEnabled = isFeatureEnabled("ENABLE_GENERATING_AI_SESSIONS");
+
   if (isLoading) {
     return (
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: aiEnabled ? 6 : 5 }).map((_, i) => (
           <Card key={i} className="p-6">
             <Skeleton className="mb-2 h-4 w-24" />
             <Skeleton className="mb-1 h-10 w-32" />
@@ -66,13 +69,15 @@ export function KpiCardGrid({ metrics, isLoading }: KpiCardGridProps) {
         iconColor="text-green-600 dark:text-green-400"
       />
 
-      <KpiCard
-        label="AI Adoption Rate"
-        value={formatPercentage(metrics.aiAdoptionRate)}
-        description="Users utilizing AI-generated sessions"
-        icon={Zap}
-        iconColor="text-amber-600 dark:text-amber-400"
-      />
+      {aiEnabled ? (
+        <KpiCard
+          label="AI Adoption Rate"
+          value={formatPercentage(metrics.aiAdoptionRate)}
+          description="Users utilizing AI-generated sessions"
+          icon={Zap}
+          iconColor="text-amber-600 dark:text-amber-400"
+        />
+      ) : null}
 
       <KpiCard
         label="Failure Rate"

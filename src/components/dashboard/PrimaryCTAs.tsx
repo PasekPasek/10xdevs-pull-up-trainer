@@ -9,9 +9,10 @@ interface PrimaryCTAsProps {
   onCreateAi: () => void;
   onCreateManual: () => void;
   disabled?: boolean;
+  aiEnabled?: boolean;
 }
 
-export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled }: PrimaryCTAsProps) {
+export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled, aiEnabled = true }: PrimaryCTAsProps) {
   const hasActiveSession = Boolean(snapshot.activeSession);
   const depleted = hasNoQuota(snapshot.aiQuota);
   const aiDisabled = disabled || depleted || hasActiveSession;
@@ -20,15 +21,17 @@ export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled }: 
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          onClick={onCreateAi}
-          disabled={aiDisabled}
-          className="flex-1 justify-center gap-2"
-          data-testid="create-ai-button"
-        >
-          <Sparkles className="size-4" />
-          Create with AI
-        </Button>
+        {aiEnabled ? (
+          <Button
+            onClick={onCreateAi}
+            disabled={aiDisabled}
+            className="flex-1 justify-center gap-2"
+            data-testid="create-ai-button"
+          >
+            <Sparkles className="size-4" />
+            Create with AI
+          </Button>
+        ) : null}
         <Button
           variant="outline"
           onClick={onCreateManual}
@@ -50,7 +53,7 @@ export function PrimaryCTAs({ snapshot, onCreateAi, onCreateManual, disabled }: 
         </Alert>
       ) : null}
 
-      {depleted ? (
+      {aiEnabled && depleted ? (
         <Alert variant="destructive" className="border-destructive/60 bg-destructive/10 text-destructive">
           <AlertDescription className="flex items-start gap-2 text-sm">
             <Sparkles className="size-4" aria-hidden="true" />
