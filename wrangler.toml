@@ -1,4 +1,4 @@
-name = "10x-pull-up-trainer"
+name = "10xdevs-pull-up-trainer"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-01-01"
 
