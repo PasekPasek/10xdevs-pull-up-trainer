@@ -4,6 +4,7 @@ import { z } from "zod";
 import { buildErrorResponse, createHttpError } from "../../../../lib/utils/httpError";
 import { listGenerations } from "../../../../lib/services/ai/listGenerations";
 import type { GenerationStatus } from "../../../../types";
+import { requireFeature } from "../../../../features";
 
 export const prerender = false;
 
@@ -45,6 +46,9 @@ export const GET: APIRoute = async (context) => {
         details: { requestId },
       });
     }
+
+    // Check feature flag
+    requireFeature("ENABLE_GENERATING_AI_SESSIONS");
 
     // Parse query params
     const url = new URL(context.request.url);

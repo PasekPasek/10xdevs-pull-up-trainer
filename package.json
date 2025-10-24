@@ -3,7 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "PUBLIC_ENV_NAME=local astro dev",
+    "dev:integration": "PUBLIC_ENV_NAME=integration astro dev",
+    "dev:prod": "PUBLIC_ENV_NAME=prod astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

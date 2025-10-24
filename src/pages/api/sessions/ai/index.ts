@@ -5,6 +5,7 @@ import { buildErrorResponse, createHttpError } from "../../../../lib/utils/httpE
 import { generateAiSession } from "../../../../lib/services/ai/generateSession";
 import { getQuota } from "../../../../lib/services/ai/getQuota";
 import { mapSessionRowToDTO } from "../../../../lib/services/sessions/mappers";
+import { requireFeature } from "../../../../features";
 
 export const prerender = false;
 
@@ -39,6 +40,9 @@ export const POST: APIRoute = async (context) => {
         details: { requestId },
       });
     }
+
+    // Check feature flag
+    requireFeature("ENABLE_GENERATING_AI_SESSIONS");
 
     // Parse request body
     let requestBody;

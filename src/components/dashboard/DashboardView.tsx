@@ -20,6 +20,7 @@ import { ETagConflictDialog } from "@/components/dashboard/ETagConflictDialog";
 import { AIWizardModal } from "@/components/dashboard/AIWizardModal";
 import { useDashboardContext } from "@/components/dashboard/DashboardContext";
 import { hasNoQuota } from "@/components/dashboard/types";
+import { isFeatureEnabled } from "@/features";
 import { toast } from "sonner";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import type { SessionDetailDTO } from "@/types";
@@ -42,6 +43,12 @@ function DashboardViewInner() {
 
   const isLoading = snapshotQuery.isLoading;
   const isError = snapshotQuery.isError;
+
+  // Check if AI features are enabled
+  const aiEnabled = isFeatureEnabled("ENABLE_GENERATING_AI_SESSIONS");
+
+  // Debug: Log feature flag state (remove this after debugging)
+  console.log("AI Feature Enabled:", aiEnabled, "Env:", import.meta.env.PUBLIC_ENV_NAME || "not set");
 
   const handleComplete = useCallback(
     (session: SessionDetailDTO) => {
@@ -161,9 +168,9 @@ function DashboardViewInner() {
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground text-sm">Track your pull-up sessions and create new plans.</p>
           </div>
-          {snapshot?.aiQuota ? (
+          {aiEnabled && snapshot?.aiQuota ? (
             <AIQuotaBadge quota={snapshot.aiQuota} />
-          ) : isLoading ? (
+          ) : aiEnabled && isLoading ? (
             <Skeleton className="h-12 w-64" />
           ) : null}
         </header>
@@ -211,6 +218,7 @@ function DashboardViewInner() {
                 onCreateAi={handleCreateAi}
                 onCreateManual={() => (window.location.href = "/sessions/new")}
                 disabled={isProcessing}
+                aiEnabled={aiEnabled}
               />
             ) : null}
           </div>
@@ -261,14 +269,16 @@ function DashboardViewInner() {
         onRefresh={() => snapshotQuery.refetch()}
       />
 
-      <AIWizardModal
-        quota={snapshot?.aiQuota}
-        onSuccess={() => {
-          toast.success("AI session created");
-          invalidate();
-          closeWizard();
-        }}
-      />
+      {aiEnabled ? (
+        <AIWizardModal
+          quota={snapshot?.aiQuota}
+          onSuccess={() => {
+            toast.success("AI session created");
+            invalidate();
+            closeWizard();
+          }}
+        />
+      ) : null}
     </>
   );
 }

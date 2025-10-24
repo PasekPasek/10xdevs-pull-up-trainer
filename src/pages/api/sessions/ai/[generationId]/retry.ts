@@ -5,6 +5,7 @@ import { buildErrorResponse, createHttpError } from "../../../../../lib/utils/ht
 import { generateAiSession, fetchRecentSessionsForUser } from "../../../../../lib/services/ai/generateSession";
 import { getQuota } from "../../../../../lib/services/ai/getQuota";
 import { mapSessionRowToDTO } from "../../../../../lib/services/sessions/mappers";
+import { requireFeature } from "../../../../../features";
 
 export const prerender = false;
 
@@ -37,6 +38,9 @@ export const POST: APIRoute = async (context) => {
         details: { requestId },
       });
     }
+
+    // Check feature flag
+    requireFeature("ENABLE_GENERATING_AI_SESSIONS");
 
     // Validate params
     const paramsResult = paramsSchema.safeParse(context.params);
