@@ -10,6 +10,14 @@ declare global {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       supabase: SupabaseClient<Database, "public", any>;
       user?: import("@supabase/supabase-js").User;
+      runtime?: {
+        env?: {
+          SUPABASE_URL?: string;
+          SUPABASE_KEY?: string;
+          OPENROUTER_API_KEY?: string;
+          [key: string]: string | undefined;
+        };
+      };
     }
   }
 }

@@ -46,7 +46,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const supabase = createSupabaseServerInstance({ headers: request.headers, cookies });
+  // Get runtime environment variables from Cloudflare context
+  const runtime = context.locals.runtime as { env?: Record<string, string> } | undefined;
+  const env = runtime?.env;
+
+  const supabase = createSupabaseServerInstance({
+    headers: request.headers,
+    cookies,
+    env: env
+      ? {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_KEY: env.SUPABASE_KEY,
+        }
+      : undefined,
+  });
   context.locals.supabase = supabase;
 
   if (PUBLIC_API_ROUTES.has(pathname)) {

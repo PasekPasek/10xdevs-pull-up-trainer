@@ -24,10 +24,18 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
 interface CreateSupabaseServerInstanceParams {
   headers: Headers;
   cookies: import("astro").AstroCookies;
+  env?: {
+    SUPABASE_URL?: string;
+    SUPABASE_KEY?: string;
+  };
 }
 
-export function createSupabaseServerInstance({ headers, cookies }: CreateSupabaseServerInstanceParams) {
-  return createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+export function createSupabaseServerInstance({ headers, cookies, env }: CreateSupabaseServerInstanceParams) {
+  // Use runtime env from Cloudflare if available, otherwise fall back to import.meta.env
+  const supabaseUrl = env?.SUPABASE_URL || import.meta.env.SUPABASE_URL;
+  const supabaseKey = env?.SUPABASE_KEY || import.meta.env.SUPABASE_KEY;
+
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookieOptions,
     cookies: {
       getAll() {

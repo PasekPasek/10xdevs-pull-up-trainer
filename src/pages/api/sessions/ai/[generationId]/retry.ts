@@ -101,8 +101,12 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
+    // Get runtime environment variables from Cloudflare context
+    const runtime = context.locals.runtime as { env?: Record<string, string> } | undefined;
+    const apiKey = runtime?.env?.OPENROUTER_API_KEY;
+
     const { session, generation: newGeneration } = await generateAiSession(
-      { supabase },
+      { supabase, apiKey },
       user.id,
       maxPullups,
       generation.model,

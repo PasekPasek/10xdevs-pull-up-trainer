@@ -656,16 +656,17 @@ export const __test = {
 };
 
 export function createOpenRouterService(
-  overrides: Partial<Omit<OpenRouterServiceDependencies, "apiKey">> = {}
+  overrides: Partial<Omit<OpenRouterServiceDependencies, "apiKey">> & { apiKey?: string } = {}
 ): OpenRouterService {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+  // Use runtime apiKey if provided, otherwise fall back to import.meta.env
+  const apiKey = overrides.apiKey || import.meta.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not configured");
   }
 
   return new OpenRouterService({
-    apiKey,
     ...overrides,
+    apiKey,
   });
 }

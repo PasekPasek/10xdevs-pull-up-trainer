@@ -17,6 +17,7 @@ import { OpenRouterError, mapOpenRouterErrorToHttpStatus } from "./openrouter";
 
 interface GenerateSessionDependencies {
   supabase: SupabaseClient<Database>;
+  apiKey?: string;
 }
 
 export interface GenerateSessionResult {
@@ -53,7 +54,7 @@ export async function generateAiSession(
   }
 
   const startedAt = Date.now();
-  const openRouter = getOpenRouterService();
+  const openRouter = getOpenRouterService(dependencies.apiKey);
 
   const recentSessions = await getRecentSessions(supabase, userId);
   const isNewUser = recentSessions.length === 0;

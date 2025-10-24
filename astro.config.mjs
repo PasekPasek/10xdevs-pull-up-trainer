@@ -16,9 +16,14 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     resolve: {
-      alias: {
-        "react-dom/server": "react-dom/server.edge",
-      },
+      // Only use edge runtime for production builds (Cloudflare)
+      // In development, use the default Node.js server rendering
+      alias:
+        process.env.NODE_ENV === "production"
+          ? {
+              "react-dom/server": "react-dom/server.edge",
+            }
+          : {},
     },
   },
   adapter: cloudflare({

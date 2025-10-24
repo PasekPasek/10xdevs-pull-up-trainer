@@ -71,8 +71,18 @@ export const POST: APIRoute = async (context) => {
 
     const { startNow, maxPullups, model } = bodyResult.data;
 
+    // Get runtime environment variables from Cloudflare context
+    const runtime = context.locals.runtime as { env?: Record<string, string> } | undefined;
+    const apiKey = runtime?.env?.OPENROUTER_API_KEY;
+
     // Generate AI session (with MOCK LLM)
-    const { session, generation } = await generateAiSession({ supabase }, user.id, maxPullups, model, startNow);
+    const { session, generation } = await generateAiSession(
+      { supabase, apiKey },
+      user.id,
+      maxPullups,
+      model,
+      startNow
+    );
 
     // Get updated quota
     const quota = await getQuota({ supabase }, user.id);
