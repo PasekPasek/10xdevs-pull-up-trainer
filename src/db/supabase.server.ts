@@ -35,6 +35,16 @@ export function createSupabaseServerInstance({ headers, cookies, env }: CreateSu
   const supabaseUrl = env?.SUPABASE_URL || import.meta.env.SUPABASE_URL;
   const supabaseKey = env?.SUPABASE_KEY || import.meta.env.SUPABASE_KEY;
 
+  // Debug logging for Cloudflare deployment
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase credentials missing!", {
+      hasRuntimeUrl: !!env?.SUPABASE_URL,
+      hasRuntimeKey: !!env?.SUPABASE_KEY,
+      hasImportMetaUrl: !!import.meta.env.SUPABASE_URL,
+      hasImportMetaKey: !!import.meta.env.SUPABASE_KEY,
+    });
+  }
+
   return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookieOptions,
     cookies: {

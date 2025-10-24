@@ -80,6 +80,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
       }
 
+      if (error.message === "EMAIL_CONFIRMATION_REQUIRED") {
+        return buildErrorResponse(
+          createHttpError({
+            status: 202,
+            code: "EMAIL_CONFIRMATION_REQUIRED",
+            message: "Account created successfully! Please check your email to confirm your account before signing in.",
+            details: { requestId },
+          }),
+          { requestId }
+        );
+      }
+
       if (error.message === "AUTO_LOGIN_FAILED") {
         return buildErrorResponse(
           createHttpError({
@@ -93,12 +105,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       if (error.message === "REGISTRATION_FAILED") {
+        // Include the underlying Supabase error for debugging
+        const cause = (error as any).cause;
         return buildErrorResponse(
           createHttpError({
             status: 500,
             code: "REGISTRATION_FAILED",
-            message: "Failed to create account. Please try again.",
-            details: { requestId },
+            message: cause ? `Failed to create account: ${cause}` : "Failed to create account. Please try again.",
+            details: { requestId, cause },
           }),
           { requestId }
         );

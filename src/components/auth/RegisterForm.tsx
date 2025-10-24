@@ -62,6 +62,17 @@ function RegisterForm() {
     (values: RegisterFormValues) => {
       registerMutation.mutate(values, {
         onError: (error) => {
+          // Handle email confirmation required (202 - account created, needs email verification)
+          if (error && typeof error === "object" && "status" in error && error.status === 202) {
+            const message = getErrorMessage(error, "Account created! Please check your email to confirm your account.");
+            toast.success(message, {
+              duration: 8000,
+            });
+            form.reset();
+            // Don't redirect - user needs to confirm email first
+            return;
+          }
+
           // Handle conflict error (409 - email already exists)
           if (isConflictError(error)) {
             const message = getErrorMessage(error, "An account with this email already exists");
