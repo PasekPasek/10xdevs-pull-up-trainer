@@ -22,7 +22,6 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
 - **Session State Management**: Track sessions through planned, in-progress, completed, and failed states
 - **Smart Warnings**: Get notified about rest period recommendations and multiple sessions per day
 - **Progress Insights**: AI-generated comments provide technique tips and encouragement
-- **Data Export**: Export all training data in JSON or CSV format
 - **Mobile-First Design**: Optimized for recording workouts on mobile devices in gym environments
 - **Accessibility**: WCAG 2.1 Level AA compliant for inclusive user experience
 
@@ -62,7 +61,7 @@ A mobile-responsive web application designed to help advanced fitness enthusiast
 ### DevOps
 
 - **GitHub Actions** - CI/CD pipeline automation
-- **DigitalOcean** - Docker-based application hosting
+- **Cloudflare Pages** - Edge-based application hosting
 
 ## Prerequisites
 
@@ -100,7 +99,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 OPENROUTER_API_KEY=your_openrouter_api_key
 
 # Application Configuration
-PUBLIC_APP_URL=http://localhost:4321
+PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### 4. Run Development Server
@@ -109,7 +108,7 @@ PUBLIC_APP_URL=http://localhost:4321
 npm run dev
 ```
 
-The application will be available at `http://localhost:4321`
+The application will be available at `http://localhost:3000`
 
 ### 5. Build for Production
 
@@ -159,8 +158,6 @@ npm run preview
 
 - Email/password authentication
 - User profile management
-- Password reset functionality
-- Account deletion
 
 ✅ **Session Management**
 
@@ -186,7 +183,6 @@ npm run preview
 
 ✅ **Data Management**
 
-- Export training data (JSON/CSV)
 - Timezone-aware date handling (UTC storage, local display)
 - Data integrity and validation
 
@@ -234,14 +230,17 @@ The MVP will be considered successful when:
 
 ### Current Development Focus
 
-- [ ] Database schema and migrations
-- [ ] Authentication system with Supabase
-- [ ] Session creation and management
-- [ ] AI integration with Openrouter.ai
-- [ ] Training history and filtering
-- [ ] Admin dashboard
-- [ ] Accessibility compliance
-- [ ] Mobile responsiveness
+- [x] Database schema and migrations
+- [x] Authentication system with Supabase
+- [x] Session creation and management
+- [x] AI integration with Openrouter.ai
+- [x] Training history and filtering
+- [x] Admin dashboard
+- [x] Accessibility compliance
+- [x] Mobile responsiveness
+- [ ] Data export functionality (JSON/CSV)
+- [ ] Password reset functionality
+- [ ] Account deletion
 
 ## License
 
