@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Debug utility to check feature flag environment detection
  *

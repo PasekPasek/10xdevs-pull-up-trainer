@@ -47,9 +47,6 @@ function DashboardViewInner() {
   // Check if AI features are enabled
   const aiEnabled = isFeatureEnabled("ENABLE_GENERATING_AI_SESSIONS");
 
-  // Debug: Log feature flag state (remove this after debugging)
-  console.log("AI Feature Enabled:", aiEnabled, "Env:", import.meta.env.PUBLIC_ENV_NAME || "not set");
-
   const handleComplete = useCallback(
     (session: SessionDetailDTO) => {
       completeDialog.openDialog(session);

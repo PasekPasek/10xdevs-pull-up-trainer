@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { config } from "dotenv";
 import { cleanupUserSessions } from "./helpers/db-cleanup";
 import { TEST_USER } from "./helpers/test-data";
@@ -23,4 +24,3 @@ async function globalSetup() {
 }
 
 export default globalSetup;
-
