@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:e2e": "playwright test",
+    "test:e2e": "mv .env .env.backup 2>/dev/null || true && cp .env.test .env && playwright test; EXIT_CODE=$?; mv .env.backup .env 2>/dev/null || true; exit $EXIT_CODE",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "dev:e2e": "dotenv -e .env.test -- npm run dev"

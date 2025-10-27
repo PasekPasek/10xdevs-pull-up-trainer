@@ -12,6 +12,7 @@ export default defineConfig({
   workers: 1, // Force single worker to ensure serial execution
   reporter: [["html"], ["list"]],
   timeout: 30000,
+  globalSetup: "./e2e/global-setup.ts",
 
   use: {
     baseURL: "http://localhost:3000",
@@ -27,13 +28,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npm run dev",
+    command: "astro dev",
     url: "http://localhost:3000",
-    reuseExistingServer: true,
+    reuseExistingServer: false, // Always start fresh to ensure correct env vars
     timeout: 120000,
-    env: {
-      SUPABASE_URL: process.env.SUPABASE_URL || "",
-      SUPABASE_KEY: process.env.SUPABASE_KEY || "",
-    },
   },
 });
